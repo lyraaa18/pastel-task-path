@@ -1,0 +1,135 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { MobileShell } from "@/components/MobileShell";
+import { useCourses, useTodos, type Course } from "@/lib/store";
+import { ChevronLeft, Image as ImgIcon, ChevronDown } from "lucide-react";
+import { useState } from "react";
+
+export const Route = createFileRoute("/courses/$id")({
+  head: ({ params }) => ({
+    meta: [{ title: `Course — Student OS` }, { name: "description", content: `Course ${params.id}` }],
+  }),
+  component: CourseDetail,
+});
+
+const gradients: Record<Course["color"], string> = {
+  orange: "from-pastel-orange via-pastel-yellow to-background",
+  blue: "from-pastel-blue via-pastel-gray to-background",
+  gray: "from-pastel-gray via-pastel-blue/40 to-background",
+  yellow: "from-pastel-yellow via-pastel-orange/40 to-background",
+  pink: "from-pastel-pink via-pastel-orange/30 to-background",
+  green: "from-pastel-green via-pastel-yellow/30 to-background",
+};
+
+const tabs = ["To-do", "Files", "Study Sets", "Links"] as const;
+
+function CourseDetail() {
+  const { id } = Route.useParams();
+  const nav = useNavigate();
+  const [courses] = useCourses();
+  const [todos, setTodos] = useTodos();
+  const [tab, setTab] = useState<(typeof tabs)[number]>("To-do");
+  const [filter, setFilter] = useState<"Ongoing" | "Done">("Ongoing");
+
+  const course = courses.find((c) => c.id === id);
+  if (!course) {
+    return (
+      <MobileShell>
+        <div className="p-10 text-center text-muted-foreground">Course not found.</div>
+      </MobileShell>
+    );
+  }
+
+  const courseTodos = todos.filter((t) => t.courseId === id && (filter === "Ongoing" ? !t.done : t.done));
+
+  return (
+    <MobileShell>
+      <div className={`relative h-64 bg-gradient-to-b ${gradients[course.color]}`}>
+        <button
+          onClick={() => nav({ to: "/courses" })}
+          className="absolute top-10 left-5 w-10 h-10 rounded-full bg-foreground/15 backdrop-blur flex items-center justify-center"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-20 h-20 rounded-2xl bg-card border border-border flex items-center justify-center">
+          <ImgIcon className="w-7 h-7 text-muted-foreground" strokeWidth={1.4} />
+        </div>
+        <button className="absolute bottom-6 right-5 text-xs px-3 py-1.5 rounded-full bg-card border border-border">
+          Edit Course
+        </button>
+      </div>
+
+      <div className="px-6 pt-6">
+        <h1 className="font-serif text-3xl italic lowercase">{course.name}</h1>
+        <div className="mt-4 space-y-2 text-sm">
+          <Row label="👤 Instructor" value={course.instructor ?? "—"} />
+          <Row label="🕐 Schedules" value={course.day && course.time ? `${course.day}  |  ${course.time}` : "—"} />
+          <Row label="📍 Room Location" value={course.room ?? "—"} />
+        </div>
+
+        <div className="mt-6 flex gap-2 overflow-x-auto pb-2">
+          {tabs.map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={
+                "px-4 py-1.5 rounded-full text-xs whitespace-nowrap " +
+                (tab === t ? "bg-pastel-yellow font-semibold" : "bg-secondary text-muted-foreground")
+              }
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+
+        {tab === "To-do" ? (
+          <div className="mt-4">
+            <button
+              onClick={() => setFilter(filter === "Ongoing" ? "Done" : "Ongoing")}
+              className="flex items-center gap-1 text-xs bg-secondary px-3 py-1.5 rounded-full"
+            >
+              {filter} <ChevronDown className="w-3 h-3" />
+            </button>
+            <div className="mt-6 space-y-3">
+              {courseTodos.length === 0 ? (
+                <div className="text-center py-10 text-muted-foreground text-sm">
+                  <div className="text-4xl mb-3">📋</div>
+                  No tasks to accomplish.
+                  <div className="mt-4">
+                    <Link to="/todo/new" search={{ courseId: id } as never} className="inline-block px-5 py-2 rounded-lg bg-pastel-yellow text-sm font-semibold">
+                      + To-do
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                courseTodos.map((t) => (
+                  <div key={t.id} className="rounded-2xl bg-card border border-border p-4 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-pastel-yellow/60 flex items-center justify-center">📝</div>
+                    <div className="flex-1 text-sm font-medium">{t.title}</div>
+                    <button
+                      onClick={() => setTodos((prev) => prev.map((x) => (x.id === t.id ? { ...x, done: !x.done } : x)))}
+                      className={"w-6 h-6 rounded-md border-2 flex items-center justify-center " + (t.done ? "bg-foreground border-foreground" : "border-border")}
+                    >
+                      {t.done && <span className="text-primary-foreground text-xs">✓</span>}
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="mt-8 text-center text-sm text-muted-foreground">Coming soon.</div>
+        )}
+      </div>
+    </MobileShell>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline gap-2">
+      <span className="text-foreground/80">{label}</span>
+      <span className="flex-1 border-b border-dashed border-border" />
+      <span className="text-foreground/80">{value}</span>
+    </div>
+  );
+}
