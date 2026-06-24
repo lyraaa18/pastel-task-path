@@ -105,10 +105,15 @@ function Home() {
             const course = courses.find((c) => c.id === t.courseId);
             const labelTxt = course?.name ?? t.label;
             return (
-              <div key={t.id} className="rounded-2xl bg-card border border-border p-4 flex items-center gap-3 shadow-sm">
+              <Link
+                key={t.id}
+                to="/todo/$id"
+                params={{ id: t.id }}
+                className="rounded-2xl bg-card border border-border p-4 flex items-center gap-3 shadow-sm active:scale-[0.99] transition"
+              >
                 <div className="w-10 h-10 rounded-xl bg-pastel-yellow/60 flex items-center justify-center text-lg">📝</div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate">{t.title}</div>
+                  <div className={"font-medium text-sm truncate " + (t.done ? "line-through text-muted-foreground" : "")}>{t.title}</div>
                   <div className="text-xs text-muted-foreground mt-0.5 truncate">
                     {labelTxt}
                     {t.deadline && (
@@ -120,7 +125,11 @@ function Home() {
                 </div>
                 <button
                   aria-label="toggle"
-                  onClick={() => setTodos((prev) => prev.map((x) => (x.id === t.id ? { ...x, done: !x.done } : x)))}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setTodos((prev) => prev.map((x) => (x.id === t.id ? { ...x, done: !x.done } : x)));
+                  }}
                   className={
                     "w-6 h-6 rounded-md border-2 flex items-center justify-center " +
                     (t.done ? "bg-foreground border-foreground" : "border-border")
@@ -128,7 +137,7 @@ function Home() {
                 >
                   {t.done && <span className="text-primary-foreground text-xs">✓</span>}
                 </button>
-              </div>
+              </Link>
             );
           })}
         </div>
