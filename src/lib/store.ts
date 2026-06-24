@@ -22,11 +22,16 @@ export type Course = {
   room?: string;
 };
 
+export type HabitFrequency = "daily" | "weekly" | "monthly" | "custom";
+
 export type Habit = {
   id: string;
   name: string;
   icon: string; // emoji or key
   target: string; // e.g. "8 glass"
+  frequency: HabitFrequency;
+  weekdays?: number[]; // 0=Sun..6=Sat, for custom
+  time?: string; // optional "HH:mm"
   // daily completion: map date(YYYY-MM-DD) -> boolean
   log: Record<string, boolean>;
 };
