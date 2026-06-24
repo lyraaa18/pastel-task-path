@@ -12,14 +12,23 @@ export type Todo = {
   createdAt: string;
 };
 
+export type CourseSchedule = {
+  id: string;
+  days: number[]; // 0=Mon..6=Sun
+  start: string; // "HH:mm"
+  end: string;   // "HH:mm"
+};
+
 export type Course = {
   id: string;
   name: string;
   color: "orange" | "blue" | "gray" | "yellow" | "pink" | "green";
   instructor?: string;
+  room?: string;
+  schedules?: CourseSchedule[];
+  // legacy fields, kept for older data
   day?: string;
   time?: string;
-  room?: string;
 };
 
 export type HabitFrequency = "daily" | "weekly" | "monthly" | "custom";
@@ -27,12 +36,11 @@ export type HabitFrequency = "daily" | "weekly" | "monthly" | "custom";
 export type Habit = {
   id: string;
   name: string;
-  icon: string; // emoji or key
-  target: string; // e.g. "8 glass"
+  icon: string;
+  target: string;
   frequency: HabitFrequency;
-  weekdays?: number[]; // 0=Sun..6=Sat, for custom
-  time?: string; // optional "HH:mm"
-  // daily completion: map date(YYYY-MM-DD) -> boolean
+  weekdays?: number[];
+  time?: string;
   log: Record<string, boolean>;
 };
 
@@ -98,9 +106,12 @@ const defaultProfile: Profile = {
 };
 
 const defaultCourses: Course[] = [
-  { id: "c1", name: "Analisa Malware", color: "orange", instructor: "Mr. J", day: "TUE", time: "14:39 - 15:39", room: "K" },
-  { id: "c2", name: "Blockchain", color: "blue", instructor: "Mrs. A", day: "WED", time: "10:00 - 11:30", room: "B2" },
-  { id: "c3", name: "Bootcamp", color: "gray", instructor: "Mr. K", day: "FRI", time: "09:00 - 12:00", room: "Lab" },
+  { id: "c1", name: "Analisa Malware", color: "orange", instructor: "Mr. J", room: "K",
+    schedules: [{ id: "s1", days: [1], start: "14:39", end: "15:39" }] },
+  { id: "c2", name: "Blockchain", color: "blue", instructor: "Mrs. A", room: "B2",
+    schedules: [{ id: "s2", days: [2], start: "10:00", end: "11:30" }] },
+  { id: "c3", name: "Bootcamp", color: "gray", instructor: "Mr. K", room: "Lab",
+    schedules: [{ id: "s3", days: [4], start: "09:00", end: "12:00" }] },
 ];
 
 const defaultHabits: Habit[] = [
@@ -120,12 +131,19 @@ export const uid = () => Math.random().toString(36).slice(2, 10);
 export const fmtDate = (d = new Date()) =>
   d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
-export const ymd = (d = new Date()) => d.toISOString().slice(0, 10);
+export const ymd = (d = new Date()) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
 
 export const startOfWeek = (d = new Date()) => {
   const x = new Date(d);
-  const day = (x.getDay() + 6) % 7; // Mon=0
+  const day = (x.getDay() + 6) % 7;
   x.setDate(x.getDate() - day);
   x.setHours(0, 0, 0, 0);
   return x;
 };
+
+export const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
