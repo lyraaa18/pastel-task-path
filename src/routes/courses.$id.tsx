@@ -83,35 +83,55 @@ function CourseDetail() {
 
         {tab === "To-do" ? (
           <div className="mt-4">
-            <button
-              onClick={() => setFilter(filter === "Ongoing" ? "Done" : "Ongoing")}
-              className="flex items-center gap-1 text-xs bg-secondary px-3 py-1.5 rounded-full"
-            >
-              {filter} <ChevronDown className="w-3 h-3" />
-            </button>
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setFilter(filter === "Ongoing" ? "Done" : "Ongoing")}
+                className="flex items-center gap-1 text-xs bg-secondary px-3 py-1.5 rounded-full"
+              >
+                {filter} <ChevronDown className="w-3 h-3" />
+              </button>
+              <Link
+                to="/todo/new"
+                search={{ courseId: id }}
+                className="text-xs px-3 py-1.5 rounded-full bg-pastel-yellow font-semibold"
+              >
+                + To-do
+              </Link>
+            </div>
             <div className="mt-6 space-y-3">
               {courseTodos.length === 0 ? (
                 <div className="text-center py-10 text-muted-foreground text-sm">
                   <div className="text-4xl mb-3">📋</div>
                   No tasks to accomplish.
-                  <div className="mt-4">
-                    <Link to="/todo/new" search={{ courseId: id } as never} className="inline-block px-5 py-2 rounded-lg bg-pastel-yellow text-sm font-semibold">
-                      + To-do
-                    </Link>
-                  </div>
                 </div>
               ) : (
                 courseTodos.map((t) => (
-                  <div key={t.id} className="rounded-2xl bg-card border border-border p-4 flex items-center gap-3">
+                  <Link
+                    key={t.id}
+                    to="/todo/$id"
+                    params={{ id: t.id }}
+                    className="rounded-2xl bg-card border border-border p-4 flex items-center gap-3 active:scale-[0.99] transition"
+                  >
                     <div className="w-9 h-9 rounded-lg bg-pastel-yellow/60 flex items-center justify-center">📝</div>
-                    <div className="flex-1 text-sm font-medium">{t.title}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className={"text-sm font-medium truncate " + (t.done ? "line-through text-muted-foreground" : "")}>{t.title}</div>
+                      {t.deadline && (
+                        <div className="text-[11px] text-pastel-orange mt-0.5">
+                          {new Date(t.deadline).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        </div>
+                      )}
+                    </div>
                     <button
-                      onClick={() => setTodos((prev) => prev.map((x) => (x.id === t.id ? { ...x, done: !x.done } : x)))}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setTodos((prev) => prev.map((x) => (x.id === t.id ? { ...x, done: !x.done } : x)));
+                      }}
                       className={"w-6 h-6 rounded-md border-2 flex items-center justify-center " + (t.done ? "bg-foreground border-foreground" : "border-border")}
                     >
                       {t.done && <span className="text-primary-foreground text-xs">✓</span>}
                     </button>
-                  </div>
+                  </Link>
                 ))
               )}
             </div>

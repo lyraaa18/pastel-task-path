@@ -16,6 +16,7 @@ import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TodoNewRouteImport } from './routes/todo.new'
+import { Route as TodoIdRouteImport } from './routes/todo.$id'
 import { Route as CoursesIdRouteImport } from './routes/courses.$id'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -53,6 +54,11 @@ const TodoNewRoute = TodoNewRouteImport.update({
   path: '/todo/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TodoIdRoute = TodoIdRouteImport.update({
+  id: '/todo/$id',
+  path: '/todo/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CoursesIdRoute = CoursesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/schedule': typeof ScheduleRoute
   '/settings': typeof SettingsRoute
   '/courses/$id': typeof CoursesIdRoute
+  '/todo/$id': typeof TodoIdRoute
   '/todo/new': typeof TodoNewRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/schedule': typeof ScheduleRoute
   '/settings': typeof SettingsRoute
   '/courses/$id': typeof CoursesIdRoute
+  '/todo/$id': typeof TodoIdRoute
   '/todo/new': typeof TodoNewRoute
 }
 export interface FileRoutesById {
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/schedule': typeof ScheduleRoute
   '/settings': typeof SettingsRoute
   '/courses/$id': typeof CoursesIdRoute
+  '/todo/$id': typeof TodoIdRoute
   '/todo/new': typeof TodoNewRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/schedule'
     | '/settings'
     | '/courses/$id'
+    | '/todo/$id'
     | '/todo/new'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/schedule'
     | '/settings'
     | '/courses/$id'
+    | '/todo/$id'
     | '/todo/new'
   id:
     | '__root__'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/schedule'
     | '/settings'
     | '/courses/$id'
+    | '/todo/$id'
     | '/todo/new'
   fileRoutesById: FileRoutesById
 }
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   HabitsRoute: typeof HabitsRoute
   ScheduleRoute: typeof ScheduleRoute
   SettingsRoute: typeof SettingsRoute
+  TodoIdRoute: typeof TodoIdRoute
   TodoNewRoute: typeof TodoNewRoute
 }
 
@@ -184,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TodoNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/todo/$id': {
+      id: '/todo/$id'
+      path: '/todo/$id'
+      fullPath: '/todo/$id'
+      preLoaderRoute: typeof TodoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/courses/$id': {
       id: '/courses/$id'
       path: '/$id'
@@ -212,6 +232,7 @@ const rootRouteChildren: RootRouteChildren = {
   HabitsRoute: HabitsRoute,
   ScheduleRoute: ScheduleRoute,
   SettingsRoute: SettingsRoute,
+  TodoIdRoute: TodoIdRoute,
   TodoNewRoute: TodoNewRoute,
 }
 export const routeTree = rootRouteImport
