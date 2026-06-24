@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
-import { useCourses, uid, type Course } from "@/lib/store";
-import { Search, Plus, MoreVertical } from "lucide-react";
+import { useCourses, type Course } from "@/lib/store";
+import { Search, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { CourseForm } from "@/components/CourseForm";
 
 export const Route = createFileRoute("/courses")({
   head: () => ({
@@ -23,14 +24,11 @@ const colorMap: Record<Course["color"], string> = {
   green: "bg-pastel-green",
 };
 
-const colorChoices: Course["color"][] = ["orange", "blue", "gray", "yellow", "pink", "green"];
-
 function CoursesPage() {
   const [courses, setCourses] = useCourses();
   const [q, setQ] = useState("");
   const [adding, setAdding] = useState(false);
-  const [name, setName] = useState("");
-  const [color, setColor] = useState<Course["color"]>("orange");
+  const [manage, setManage] = useState(false);
 
   const filtered = courses.filter((c) => c.name.toLowerCase().includes(q.toLowerCase()));
 
@@ -38,7 +36,12 @@ function CoursesPage() {
     <MobileShell>
       <header className="px-6 pt-10 pb-4 flex items-center justify-between">
         <h1 className="font-serif text-3xl italic">Courses</h1>
-        <button className="w-9 h-9 rounded-full flex items-center justify-center"><MoreVertical className="w-5 h-5" /></button>
+        <button
+          onClick={() => setManage((m) => !m)}
+          className={"text-xs px-3 py-1.5 rounded-full border " + (manage ? "bg-pastel-yellow border-pastel-yellow font-semibold" : "border-border text-muted-foreground")}
+        >
+          {manage ? "Done" : "Manage"}
+        </button>
       </header>
 
       <div className="px-6">
@@ -55,26 +58,31 @@ function CoursesPage() {
 
       <section className="px-6 mt-6 grid grid-cols-2 gap-4">
         {filtered.map((c) => (
-          <Link
-            key={c.id}
-            to="/courses/$id"
-            params={{ id: c.id }}
-            className="block group"
-          >
-            <div className="relative">
-              {/* folder tab */}
+          <div key={c.id} className="relative">
+            <Link to="/courses/$id" params={{ id: c.id }} className="block">
               <div className={`h-4 w-2/3 rounded-t-xl ${colorMap[c.color]} border border-b-0 border-foreground/10`} />
               <div className={`rounded-2xl rounded-tl-none ${colorMap[c.color]} aspect-square border border-foreground/10 shadow-sm flex items-end p-3`}>
                 <span className="text-[11px] uppercase tracking-wider font-semibold bg-card/70 backdrop-blur px-2 py-1 rounded-md">
                   {c.name}
                 </span>
               </div>
-            </div>
-          </Link>
+            </Link>
+            {manage && (
+              <button
+                onClick={() => {
+                  if (confirm(`Delete "${c.name}"? Tasks linked to it will keep their label.`)) {
+                    setCourses((prev) => prev.filter((x) => x.id !== c.id));
+                  }
+                }}
+                className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         ))}
       </section>
 
-      {/* FAB */}
       <button
         onClick={() => setAdding(true)}
         className="fixed bottom-24 right-[calc(50%-200px)] sm:right-6 w-14 h-14 rounded-full bg-foreground text-primary-foreground flex items-center justify-center shadow-lg z-30"
@@ -83,41 +91,13 @@ function CoursesPage() {
       </button>
 
       {adding && (
-        <div className="fixed inset-0 z-50 bg-black/30 flex items-end justify-center" onClick={() => setAdding(false)}>
-          <div className="w-full max-w-[440px] bg-card rounded-t-3xl p-6" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-serif text-2xl italic mb-4">New Course</h2>
-            <input
-              autoFocus
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Course name"
-              className="w-full px-4 py-3 rounded-xl border border-border bg-background outline-none text-sm"
-            />
-            <div className="mt-4">
-              <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Color</div>
-              <div className="flex gap-2">
-                {colorChoices.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setColor(c)}
-                    className={`w-9 h-9 rounded-full ${colorMap[c]} border-2 ${color === c ? "border-foreground" : "border-transparent"}`}
-                  />
-                ))}
-              </div>
-            </div>
-            <button
-              disabled={!name.trim()}
-              onClick={() => {
-                setCourses((prev) => [...prev, { id: uid(), name: name.trim(), color }]);
-                setName("");
-                setAdding(false);
-              }}
-              className="mt-6 w-full py-3 rounded-xl bg-pastel-yellow font-semibold text-sm disabled:opacity-50"
-            >
-              Create
-            </button>
-          </div>
-        </div>
+        <CourseForm
+          onClose={() => setAdding(false)}
+          onSave={(c) => {
+            setCourses((prev) => [...prev, c]);
+            setAdding(false);
+          }}
+        />
       )}
     </MobileShell>
   );
