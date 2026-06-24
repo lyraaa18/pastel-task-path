@@ -6,45 +6,75 @@ import { useState } from "react";
 import { z } from "zod";
 
 export const Route = createFileRoute("/todo/new")({
-  validateSearch: z.object({ courseId: z.string().optional() }),
+  validateSearch: z.object({
+    courseId: z.string().optional(),
+    edit: z.string().optional(),
+  }),
   head: () => ({ meta: [{ title: "New To-do" }] }),
   component: NewTodo,
 });
 
 function NewTodo() {
   const nav = useNavigate();
-  const { courseId } = Route.useSearch();
-  const [, setTodos] = useTodos();
+  const { courseId, edit } = Route.useSearch();
+  const [todos, setTodos] = useTodos();
   const [courses] = useCourses();
 
-  const [title, setTitle] = useState("");
-  const [labelMode, setLabelMode] = useState<"Custom" | "Course">(courseId ? "Course" : "Custom");
-  const [selectedCourse, setSelectedCourse] = useState<string>(courseId ?? "");
-  const [description, setDescription] = useState("");
-  const [subtasks, setSubtasks] = useState<{ id: string; title: string }[]>([]);
-  const [newSub, setNewSub] = useState("");
-  const [deadlineOn, setDeadlineOn] = useState(true);
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [time, setTime] = useState("07:37");
+  const existing = edit ? todos.find((t) => t.id === edit) : undefined;
 
-  const create = () => {
+  const [title, setTitle] = useState(existing?.title ?? "");
+  const [labelMode, setLabelMode] = useState<"Custom" | "Course">(
+    existing?.courseId ? "Course" : courseId ? "Course" : "Custom"
+  );
+  const [selectedCourse, setSelectedCourse] = useState<string>(existing?.courseId ?? courseId ?? "");
+  const [description, setDescription] = useState(existing?.description ?? "");
+  const [subtasks, setSubtasks] = useState<{ id: string; title: string; done?: boolean }[]>(
+    existing?.subtasks ?? []
+  );
+  const [newSub, setNewSub] = useState("");
+  const [deadlineOn, setDeadlineOn] = useState(existing?.deadline ? true : true);
+  const initDeadline = existing?.deadline ? new Date(existing.deadline) : new Date();
+  const [date, setDate] = useState(
+    `${initDeadline.getFullYear()}-${String(initDeadline.getMonth() + 1).padStart(2, "0")}-${String(initDeadline.getDate()).padStart(2, "0")}`
+  );
+  const [time, setTime] = useState(
+    existing?.deadline
+      ? `${String(initDeadline.getHours()).padStart(2, "0")}:${String(initDeadline.getMinutes()).padStart(2, "0")}`
+      : "07:37"
+  );
+
+  const save = () => {
     if (!title.trim()) return;
     const labelText = labelMode === "Course" ? (courses.find((c) => c.id === selectedCourse)?.name ?? "Course") : "Custom";
-    setTodos((prev) => [
-      {
-        id: uid(),
+    const deadline = deadlineOn ? new Date(`${date}T${time}`).toISOString() : undefined;
+    if (existing) {
+      setTodos((prev) => prev.map((t) => t.id === existing.id ? {
+        ...t,
         title: title.trim(),
         label: labelText,
         courseId: labelMode === "Course" ? selectedCourse : undefined,
         description,
-        subtasks: subtasks.map((s) => ({ ...s, done: false })),
-        deadline: deadlineOn ? new Date(`${date}T${time}`).toISOString() : undefined,
-        done: false,
-        createdAt: new Date().toISOString(),
-      },
-      ...prev,
-    ]);
-    nav({ to: "/" });
+        subtasks: subtasks.map((s) => ({ id: s.id, title: s.title, done: !!s.done })),
+        deadline,
+      } : t));
+      nav({ to: "/todo/$id", params: { id: existing.id } });
+    } else {
+      setTodos((prev) => [
+        {
+          id: uid(),
+          title: title.trim(),
+          label: labelText,
+          courseId: labelMode === "Course" ? selectedCourse : undefined,
+          description,
+          subtasks: subtasks.map((s) => ({ id: s.id, title: s.title, done: false })),
+          deadline,
+          done: false,
+          createdAt: new Date().toISOString(),
+        },
+        ...prev,
+      ]);
+      nav({ to: "/" });
+    }
   };
 
   return (
@@ -53,7 +83,7 @@ function NewTodo() {
         <button onClick={() => nav({ to: "/" })} className="w-9 h-9 rounded-full flex items-center justify-center">
           <ChevronDown className="w-5 h-5" />
         </button>
-        <h1 className="font-serif text-2xl italic">New To-do</h1>
+        <h1 className="font-serif text-2xl italic">{existing ? "Edit To-do" : "New To-do"}</h1>
         <div className="w-9" />
       </header>
 
@@ -63,7 +93,7 @@ function NewTodo() {
         </div>
       </div>
 
-      <div className="px-6 mt-6 space-y-5">
+      <div className="px-6 mt-6 space-y-5 pb-10">
         <Field label="To-do">
           <input
             value={title}
@@ -102,7 +132,7 @@ function NewTodo() {
           )}
         </Field>
 
-        <Field label={<span className="flex items-center gap-2">Subto-dos <button onClick={() => newSub && setSubtasks([...subtasks, { id: uid(), title: newSub }]) || setNewSub("")} className="text-xs px-2 py-0.5 rounded-full bg-pastel-yellow font-semibold">Plus</button></span>}>
+        <Field label="Subto-dos">
           <div className="flex gap-2">
             <input
               value={newSub}
@@ -150,15 +180,15 @@ function NewTodo() {
               <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="w-28 px-3 py-2 rounded-xl border border-border bg-background outline-none text-sm" />
             </div>
           )}
-          <p className="text-[10px] text-muted-foreground mt-2">You will be notified a day before the deadline</p>
+          <p className="text-[10px] text-muted-foreground mt-2">Deadlines show up on the Calendar.</p>
         </div>
 
         <button
-          onClick={create}
+          onClick={save}
           disabled={!title.trim()}
           className="w-full py-3 rounded-xl bg-foreground text-primary-foreground font-semibold text-sm disabled:opacity-40 mt-4"
         >
-          Create
+          {existing ? "Save Changes" : "Create"}
         </button>
       </div>
     </MobileShell>

@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
-import { useTodos } from "@/lib/store";
+import { useTodos, useCourses, ymd } from "@/lib/store";
 import { useState } from "react";
 
 export const Route = createFileRoute("/calendar")({
@@ -10,7 +10,9 @@ export const Route = createFileRoute("/calendar")({
 
 function CalendarPage() {
   const [todos] = useTodos();
+  const [courses] = useCourses();
   const [cursor, setCursor] = useState(new Date());
+  const [selected, setSelected] = useState<string>(ymd(new Date()));
 
   const year = cursor.getFullYear();
   const month = cursor.getMonth();
@@ -33,6 +35,14 @@ function CalendarPage() {
     }
   });
 
+  const selectedTasks = todos
+    .filter((t) => t.deadline && ymd(new Date(t.deadline)) === selected)
+    .sort((a, b) => +new Date(a.deadline!) - +new Date(b.deadline!));
+
+  const selectedLabel = new Date(selected).toLocaleDateString("en-US", {
+    weekday: "long", day: "numeric", month: "long",
+  });
+
   return (
     <MobileShell>
       <header className="px-6 pt-10 pb-4 flex items-center justify-between">
@@ -50,31 +60,62 @@ function CalendarPage() {
       </div>
       <div className="px-6 mt-1 grid grid-cols-7 gap-1">
         {cells.map((c, i) => {
+          if (!c) return <div key={i} />;
+          const key = ymd(new Date(year, month, c));
           const today = new Date();
           const isToday =
-            c &&
-            today.getFullYear() === year &&
-            today.getMonth() === month &&
-            today.getDate() === c;
+            today.getFullYear() === year && today.getMonth() === month && today.getDate() === c;
+          const isSel = key === selected;
           return (
-            <div
+            <button
               key={i}
+              onClick={() => setSelected(key)}
               className={
-                "aspect-square rounded-xl flex flex-col items-center justify-center text-sm " +
-                (c ? "border border-border " : "") +
-                (isToday ? "bg-pastel-yellow font-semibold " : "bg-card ")
+                "aspect-square rounded-xl flex flex-col items-center justify-center text-sm border " +
+                (isSel ? "border-foreground bg-pastel-yellow font-semibold " :
+                  isToday ? "border-border bg-pastel-yellow/40 font-semibold " : "border-border bg-card ")
               }
             >
-              {c && (
-                <>
-                  <span>{c}</span>
-                  {tasksByDay[c] && <span className="text-[9px] text-pastel-orange font-bold">●</span>}
-                </>
-              )}
-            </div>
+              <span>{c}</span>
+              {tasksByDay[c] && <span className="text-[9px] text-pastel-orange font-bold leading-none">●</span>}
+            </button>
           );
         })}
       </div>
+
+      <section className="px-6 mt-6 pb-10">
+        <div className="font-serif text-lg italic mb-3">{selectedLabel}</div>
+        {selectedTasks.length === 0 ? (
+          <div className="text-sm text-muted-foreground text-center py-6 border border-dashed border-border rounded-2xl">
+            No deadlines on this day.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {selectedTasks.map((t) => {
+              const course = courses.find((c) => c.id === t.courseId);
+              return (
+                <Link
+                  key={t.id}
+                  to="/todo/$id"
+                  params={{ id: t.id }}
+                  className="rounded-2xl bg-card border border-border p-3 flex items-center gap-3"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-pastel-yellow/60 flex items-center justify-center">📝</div>
+                  <div className="flex-1 min-w-0">
+                    <div className={"text-sm font-medium truncate " + (t.done ? "line-through text-muted-foreground" : "")}>{t.title}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {course?.name ?? t.label}
+                      <span className="text-pastel-orange ml-1">
+                        · {new Date(t.deadline!).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </MobileShell>
   );
 }
