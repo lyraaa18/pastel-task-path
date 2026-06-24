@@ -104,10 +104,10 @@ const defaultCourses: Course[] = [
 ];
 
 const defaultHabits: Habit[] = [
-  { id: "h1", name: "Drink Water", icon: "💧", target: "8 glass", log: {} },
-  { id: "h2", name: "Study 1 Hour", icon: "📖", target: "Focus time", log: {} },
-  { id: "h3", name: "Exercise", icon: "🏋️", target: "30 minutes", log: {} },
-  { id: "h4", name: "Read", icon: "📚", target: "10 pages", log: {} },
+  { id: "h1", name: "Drink Water", icon: "💧", target: "8 glass", frequency: "daily", log: {} },
+  { id: "h2", name: "Study 1 Hour", icon: "📖", target: "Focus time", frequency: "daily", log: {} },
+  { id: "h3", name: "Exercise", icon: "🏋️", target: "30 minutes", frequency: "weekly", log: {} },
+  { id: "h4", name: "Read", icon: "📚", target: "10 pages", frequency: "daily", log: {} },
 ];
 
 export const useTodos = () => useStored<Todo[]>(KEYS.todos, []);
