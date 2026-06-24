@@ -1,7 +1,7 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
 import { useTodos, useCourses } from "@/lib/store";
-import { ChevronLeft, Trash2, Calendar, Tag } from "lucide-react";
+import { ChevronLeft, Trash2, Calendar, Tag, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/todo/$id")({
   head: ({ params }) => ({
@@ -43,6 +43,7 @@ function TodoDetail() {
     );
 
   const remove = () => {
+    if (!confirm(`Delete "${todo.title}"?`)) return;
     setTodos((prev) => prev.filter((t) => t.id !== id));
     nav({ to: "/" });
   };
@@ -54,12 +55,21 @@ function TodoDetail() {
           <ChevronLeft className="w-5 h-5" />
         </button>
         <h1 className="font-serif text-xl italic">Task</h1>
-        <button onClick={remove} className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center">
-          <Trash2 className="w-4 h-4" />
-        </button>
+        <div className="flex gap-2">
+          <Link
+            to="/todo/new"
+            search={{ edit: todo.id }}
+            className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center"
+          >
+            <Pencil className="w-4 h-4" />
+          </Link>
+          <button onClick={remove} className="w-9 h-9 rounded-full bg-destructive/15 text-destructive flex items-center justify-center">
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       </header>
 
-      <div className="px-6">
+      <div className="px-6 pb-10">
         <div className="rounded-3xl bg-pastel-yellow/50 border border-border p-5">
           <div className="flex items-start gap-3">
             <button
