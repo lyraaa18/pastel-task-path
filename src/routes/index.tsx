@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
 import { useTodos, useProfile, useCourses, fmtDate } from "@/lib/store";
-import { Plus, ShoppingBag, ChevronDown } from "lucide-react";
+import { Plus, ShoppingBag, ChevronDown, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/")({
@@ -136,6 +136,17 @@ function Home() {
                   }
                 >
                   {t.done && <span className="text-primary-foreground text-xs">✓</span>}
+                </button>
+                <button
+                  aria-label="delete"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (confirm(`Delete "${t.title}"?`)) setTodos((prev) => prev.filter((x) => x.id !== t.id));
+                  }}
+                  className="text-muted-foreground"
+                >
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </Link>
             );
