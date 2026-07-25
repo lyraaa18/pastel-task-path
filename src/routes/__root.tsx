@@ -167,8 +167,40 @@ function RootComponent() {
     }
   }, []);
 
+  const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+  if (!publishableKey) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#fcfbf8] p-6 text-foreground font-sans text-center">
+        <div className="w-full max-w-[460px] bg-white border border-[#E9E4DB] rounded-3xl p-8 shadow-sm flex flex-col items-center">
+          <h1 className="font-serif text-3xl text-[#2C2925] tracking-tight mb-4">Configuration Required</h1>
+          <p className="text-neutral-600 text-sm mb-6 leading-relaxed max-w-[320px]">
+            Authentication environment variables are missing. Please configure your Clerk keys.
+          </p>
+          <div className="bg-neutral-50 p-4 rounded-xl text-left text-xs font-mono text-neutral-600 space-y-3 border border-neutral-100 w-full mb-6">
+            <div>
+              <span className="font-semibold text-neutral-800">1. Local Dev (.env):</span>
+              <div className="bg-white p-2 rounded border border-neutral-200 select-all mt-1 font-mono text-[10px]">
+                VITE_CLERK_PUBLISHABLE_KEY=your_key_here
+              </div>
+            </div>
+            <div>
+              <span className="font-semibold text-neutral-800">2. Production (Vercel Settings):</span>
+              <p className="mt-1 text-neutral-500">Add these Environment Variables:</p>
+              <ul className="list-disc list-inside mt-1 font-sans text-[11px] space-y-0.5 text-neutral-700">
+                <li><code className="font-mono text-[10px] bg-neutral-200/50 px-1 py-0.5 rounded">VITE_CLERK_PUBLISHABLE_KEY</code></li>
+                <li><code className="font-mono text-[10px] bg-neutral-200/50 px-1 py-0.5 rounded">CLERK_SECRET_KEY</code></li>
+              </ul>
+            </div>
+          </div>
+          <p className="text-xs text-neutral-400">Remember to redeploy your project on Vercel after adding the keys.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <ClerkProvider>
+    <ClerkProvider publishableKey={publishableKey}>
       <AppContent>
         <QueryClientProvider client={queryClient}>
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
