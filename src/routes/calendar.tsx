@@ -4,7 +4,12 @@ import { useTodos, useCourses, ymd } from "@/lib/store";
 import { useState } from "react";
 
 export const Route = createFileRoute("/calendar")({
-  head: () => ({ meta: [{ title: "Calendar — Student OS" }, { name: "description", content: "Month view of your tasks." }] }),
+  head: () => ({
+    meta: [
+      { title: "Calendar — Student OS" },
+      { name: "description", content: "Month view of your tasks." },
+    ],
+  }),
   component: CalendarPage,
 });
 
@@ -41,7 +46,9 @@ function CalendarPage() {
     .sort((a, b) => +new Date(a.deadline!) - +new Date(b.deadline!));
 
   const selectedLabel = new Date(selected).toLocaleDateString("en-US", {
-    weekday: "long", day: "numeric", month: "long",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
   });
 
   return (
@@ -51,13 +58,25 @@ function CalendarPage() {
       </header>
 
       <div className="px-6 flex items-center justify-between">
-        <button onClick={() => setCursor(new Date(year, month - 1, 1))} className="px-3 py-1 rounded-full bg-secondary text-sm">‹</button>
+        <button
+          onClick={() => setCursor(new Date(year, month - 1, 1))}
+          className="px-3 py-1 rounded-full bg-secondary text-sm"
+        >
+          ‹
+        </button>
         <span className="font-semibold">{monthLabel}</span>
-        <button onClick={() => setCursor(new Date(year, month + 1, 1))} className="px-3 py-1 rounded-full bg-secondary text-sm">›</button>
+        <button
+          onClick={() => setCursor(new Date(year, month + 1, 1))}
+          className="px-3 py-1 rounded-full bg-secondary text-sm"
+        >
+          ›
+        </button>
       </div>
 
       <div className="px-6 mt-5 grid grid-cols-7 gap-1 text-center text-[10px] uppercase text-muted-foreground">
-        {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => <div key={i}>{d}</div>)}
+        {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+          <div key={i}>{d}</div>
+        ))}
       </div>
       <div className="px-6 mt-1 grid grid-cols-7 gap-1">
         {cells.map((c, i) => {
@@ -73,12 +92,17 @@ function CalendarPage() {
               onClick={() => setSelected(key)}
               className={
                 "aspect-square rounded-xl flex flex-col items-center justify-center text-sm border " +
-                (isSel ? "border-foreground bg-pastel-yellow font-semibold " :
-                  isToday ? "border-border bg-pastel-yellow/40 font-semibold " : "border-border bg-card ")
+                (isSel
+                  ? "border-foreground bg-pastel-yellow font-semibold "
+                  : isToday
+                    ? "border-border bg-pastel-yellow/40 font-semibold "
+                    : "border-border bg-card ")
               }
             >
               <span>{c}</span>
-              {tasksByDay[c] && <span className="text-[9px] text-pastel-orange font-bold leading-none">●</span>}
+              {tasksByDay[c] && (
+                <span className="text-[9px] text-pastel-orange font-bold leading-none">●</span>
+              )}
             </button>
           );
         })}
@@ -101,13 +125,26 @@ function CalendarPage() {
                   params={{ id: t.id }}
                   className="rounded-2xl bg-card border border-border p-3 flex items-center gap-3"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-pastel-yellow/60 flex items-center justify-center">📝</div>
+                  <div className="w-9 h-9 rounded-lg bg-pastel-yellow/60 flex items-center justify-center">
+                    📝
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <div className={"text-sm font-medium truncate " + (t.done ? "line-through text-muted-foreground" : "")}>{t.title}</div>
+                    <div
+                      className={
+                        "text-sm font-medium truncate " +
+                        (t.done ? "line-through text-muted-foreground" : "")
+                      }
+                    >
+                      {t.title}
+                    </div>
                     <div className="text-[11px] text-muted-foreground truncate">
                       {course?.name ?? t.label}
                       <span className="text-pastel-orange ml-1">
-                        · {new Date(t.deadline!).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                        ·{" "}
+                        {new Date(t.deadline!).toLocaleTimeString("en-GB", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </span>
                     </div>
                   </div>

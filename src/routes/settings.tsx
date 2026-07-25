@@ -4,7 +4,12 @@ import { useProfile, resetAllStores } from "@/lib/store";
 import { resetDbFn } from "@/lib/dbServer";
 
 export const Route = createFileRoute("/settings")({
-  head: () => ({ meta: [{ title: "Settings — Student OS" }, { name: "description", content: "Edit your profile." }] }),
+  head: () => ({
+    meta: [
+      { title: "Settings — Student OS" },
+      { name: "description", content: "Edit your profile." },
+    ],
+  }),
   component: SettingsPage,
 });
 
@@ -32,14 +37,19 @@ function SettingsPage() {
         <button
           onClick={async () => {
             if (confirm("Reset all app data (including Neon Database)?")) {
+              const secret = prompt("Please enter the Reset DB Secret to confirm (leave blank if none is configured):") ?? "";
               try {
-                localStorage.clear();
-                resetAllStores();
-                await resetDbFn();
-                location.reload();
+                const res = await resetDbFn({ data: { secret } });
+                if (res && res.success) {
+                  localStorage.clear();
+                  resetAllStores();
+                  location.reload();
+                } else {
+                  alert("Failed to reset database.");
+                }
               } catch (err) {
                 console.error(err);
-                alert("Failed to reset database.");
+                alert("Failed to reset database. Make sure your secret is correct.");
               }
             }
           }}

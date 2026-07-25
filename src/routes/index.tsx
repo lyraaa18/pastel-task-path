@@ -23,7 +23,11 @@ function Home() {
   const isLoading = isProfileLoading || isTodosLoading || isCoursesLoading;
 
   const today = new Date();
-  const dateLabel = today.toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" });
+  const dateLabel = today.toLocaleDateString("en-US", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 
   const visible = todos.filter((t) => (filter === "Ongoing" ? !t.done : t.done)).slice(0, 4);
 
@@ -43,26 +47,36 @@ function Home() {
       <section className="px-6">
         <div className="rounded-3xl bg-pastel-blue/60 p-5 border border-border shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-16 h-16 rounded-2xl bg-card flex items-center justify-center text-2xl">🎓</div>
+            <div className="w-16 h-16 rounded-2xl bg-card flex items-center justify-center text-2xl">
+              🎓
+            </div>
             <div className="font-serif italic text-2xl">Student ID</div>
           </div>
           <div className="border-t border-dashed border-foreground/20 my-3" />
           <div className="grid grid-cols-2 gap-y-2 text-[11px] uppercase tracking-wider">
             <div>
               <div className="text-foreground/50">Name</div>
-              <div className="text-foreground font-semibold normal-case text-sm tracking-normal">{profile.name}</div>
+              <div className="text-foreground font-semibold normal-case text-sm tracking-normal">
+                {profile.name}
+              </div>
             </div>
             <div>
               <div className="text-foreground/50">Birthday</div>
-              <div className="text-foreground font-semibold text-sm tracking-normal">{profile.birthday}</div>
+              <div className="text-foreground font-semibold text-sm tracking-normal">
+                {profile.birthday}
+              </div>
             </div>
             <div>
               <div className="text-foreground/50">School</div>
-              <div className="text-foreground font-semibold text-sm tracking-normal">{profile.school}</div>
+              <div className="text-foreground font-semibold text-sm tracking-normal">
+                {profile.school}
+              </div>
             </div>
             <div>
               <div className="text-foreground/50">Year level</div>
-              <div className="text-foreground font-semibold text-sm tracking-normal">{profile.yearLevel}</div>
+              <div className="text-foreground font-semibold text-sm tracking-normal">
+                {profile.yearLevel}
+              </div>
             </div>
           </div>
           <div className="mt-4 flex gap-[2px] h-8 items-end">
@@ -70,7 +84,11 @@ function Home() {
               <div
                 key={i}
                 className="bg-foreground"
-                style={{ width: 2, height: `${20 + ((i * 37) % 80) * 0.15}px`, opacity: i % 3 ? 1 : 0.4 }}
+                style={{
+                  width: 2,
+                  height: `${20 + ((i * 37) % 80) * 0.15}px`,
+                  opacity: i % 3 ? 1 : 0.4,
+                }}
               />
             ))}
           </div>
@@ -113,14 +131,30 @@ function Home() {
                 params={{ id: t.id }}
                 className="rounded-2xl bg-card border border-border p-4 flex items-center gap-3 shadow-sm active:scale-[0.99] transition"
               >
-                <div className="w-10 h-10 rounded-xl bg-pastel-yellow/60 flex items-center justify-center text-lg">📝</div>
+                <div className="w-10 h-10 rounded-xl bg-pastel-yellow/60 flex items-center justify-center text-lg">
+                  📝
+                </div>
                 <div className="flex-1 min-w-0">
-                  <div className={"font-medium text-sm truncate " + (t.done ? "line-through text-muted-foreground" : "")}>{t.title}</div>
+                  <div
+                    className={
+                      "font-medium text-sm truncate " +
+                      (t.done ? "line-through text-muted-foreground" : "")
+                    }
+                  >
+                    {t.title}
+                  </div>
                   <div className="text-xs text-muted-foreground mt-0.5 truncate">
                     {labelTxt}
                     {t.deadline && (
                       <span className="text-pastel-orange ml-1">
-                        | {new Date(t.deadline).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        |{" "}
+                        {new Date(t.deadline).toLocaleString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </span>
                     )}
                   </div>
@@ -130,7 +164,9 @@ function Home() {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setTodos((prev) => prev.map((x) => (x.id === t.id ? { ...x, done: !x.done } : x)));
+                    setTodos((prev) =>
+                      prev.map((x) => (x.id === t.id ? { ...x, done: !x.done } : x)),
+                    );
                   }}
                   className={
                     "w-6 h-6 rounded-md border-2 flex items-center justify-center " +
@@ -144,7 +180,8 @@ function Home() {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    if (confirm(`Delete "${t.title}"?`)) setTodos((prev) => prev.filter((x) => x.id !== t.id));
+                    if (confirm(`Delete "${t.title}"?`))
+                      setTodos((prev) => prev.filter((x) => x.id !== t.id));
                   }}
                   className="text-muted-foreground"
                 >

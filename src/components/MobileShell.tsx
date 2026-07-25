@@ -46,17 +46,17 @@ function BottomNav() {
           const active = to === "/" ? path === "/" : path.startsWith(to);
           return (
             <li key={to}>
-              <Link
-                to={to}
-                className="flex flex-col items-center gap-0.5 py-1.5 text-[10px]"
-              >
+              <Link to={to} className="flex flex-col items-center gap-0.5 py-1.5 text-[10px]">
                 <Icon
                   className={
-                    "w-5 h-5 transition " +
-                    (active ? "text-foreground" : "text-muted-foreground")
+                    "w-5 h-5 transition " + (active ? "text-foreground" : "text-muted-foreground")
                   }
                   strokeWidth={active ? 2.2 : 1.6}
-                  fill={active && (label === "Courses" || label === "Habits") ? "var(--pastel-yellow)" : "none"}
+                  fill={
+                    active && (label === "Courses" || label === "Habits")
+                      ? "var(--pastel-yellow)"
+                      : "none"
+                  }
                 />
                 <span className={active ? "text-foreground font-medium" : "text-muted-foreground"}>
                   {label}

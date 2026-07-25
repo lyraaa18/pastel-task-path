@@ -1,26 +1,144 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestIP, getRequest } from "@tanstack/react-start/server";
+import { z } from "zod";
 import { sql, initializeDatabase } from "./db";
+import { rateLimit } from "./rateLimit";
 
-export const initializeDbFn = createServerFn({ method: "POST" })
-  .handler(async () => {
-    await initializeDatabase();
-    return { success: true };
-  });
+function getClientIp(): string {
+  try {
+    const ip = getRequestIP();
+    if (ip) return ip;
+  } catch {
+    // Ignore when called outside server runtime (e.g. during build/prerender)
+  }
 
-export const getProfileFn = createServerFn({ method: "GET" })
-  .handler(async () => {
-    if (!sql) return null;
-    try {
-      const rows = await sql`SELECT * FROM profile LIMIT 1`;
-      return rows[0] || null;
-    } catch {
-      return null;
+  try {
+    const req = getRequest();
+    if (req) {
+      const xForwardedFor = req.headers.get("x-forwarded-for");
+      if (xForwardedFor) {
+        return xForwardedFor.split(",")[0].trim();
+      }
+      const xRealIp = req.headers.get("x-real-ip");
+      if (xRealIp) return xRealIp;
     }
-  });
+  } catch {
+    // Ignore
+  }
+
+  return "unknown-ip";
+}
+
+function enforceRateLimit(limit: number, windowMs: number) {
+  const ip = getClientIp();
+  if (ip === "unknown") return; // Skip if request context is not available
+  const allowed = rateLimit(ip, limit, windowMs);
+  if (!allowed) {
+    throw new Error("Too many requests. Please try again later.");
+  }
+}
+
+// Zod Schemas for Validation
+const ProfileSchema = z.object({
+  name: z.string(),
+  school: z.string(),
+  birthday: z.string(),
+  yearLevel: z.string(),
+});
+
+const CourseScheduleSchema = z.object({
+  id: z.string(),
+  days: z.array(z.number()),
+  start: z.string(),
+  end: z.string(),
+});
+
+const CourseFileSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  size: z.string(),
+  date: z.string(),
+});
+
+const FlashcardSchema = z.object({
+  id: z.string(),
+  question: z.string(),
+  answer: z.string(),
+});
+
+const CourseStudySetSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  cards: z.array(FlashcardSchema),
+});
+
+const CourseLinkSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  url: z.string(),
+});
+
+const CourseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  color: z.enum(["orange", "blue", "gray", "yellow", "pink", "green"]),
+  instructor: z.string().optional().nullable(),
+  room: z.string().optional().nullable(),
+  schedules: z.array(CourseScheduleSchema).optional().nullable(),
+  files: z.array(CourseFileSchema).optional().nullable(),
+  studySets: z.array(CourseStudySetSchema).optional().nullable(),
+  links: z.array(CourseLinkSchema).optional().nullable(),
+});
+
+const TodoSubtaskSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  done: z.boolean(),
+});
+
+const TodoSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  label: z.string(),
+  courseId: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  subtasks: z.array(TodoSubtaskSchema),
+  deadline: z.string().optional().nullable(),
+  done: z.boolean(),
+  createdAt: z.string(),
+});
+
+const HabitSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  icon: z.string(),
+  target: z.string(),
+  frequency: z.enum(["daily", "weekly", "monthly", "custom"]),
+  weekdays: z.array(z.number()).optional().nullable(),
+  time: z.string().optional().nullable(),
+  log: z.record(z.string(), z.boolean()),
+});
+
+export const initializeDbFn = createServerFn({ method: "POST" }).handler(async () => {
+  enforceRateLimit(10, 60 * 1000); // 10 requests per minute
+  await initializeDatabase();
+  return { success: true };
+});
+
+export const getProfileFn = createServerFn({ method: "GET" }).handler(async () => {
+  if (!sql) return null;
+  try {
+    const rows = await sql`SELECT * FROM profile LIMIT 1`;
+    return rows[0] || null;
+  } catch {
+    return null;
+  }
+});
 
 export const updateProfileFn = createServerFn({ method: "POST" })
-  .validator((profile: any) => profile)
+  .validator((profile: unknown) => ProfileSchema.parse(profile))
   .handler(async ({ data: p }) => {
+    enforceRateLimit(60, 60 * 1000); // 60 requests per minute
     if (!sql) return { success: false };
     await sql`
       INSERT INTO profile (id, name, school, birthday, year_level)
@@ -34,39 +152,47 @@ export const updateProfileFn = createServerFn({ method: "POST" })
     return { success: true };
   });
 
-export const getCoursesFn = createServerFn({ method: "GET" })
-  .handler(async () => {
-    if (!sql) return [];
-    try {
-      const rows = await sql`SELECT * FROM courses`;
-      return rows.map((r: any) => ({
-        id: r.id,
-        name: r.name,
-        color: r.color,
-        instructor: r.instructor || undefined,
-        room: r.room || undefined,
-        schedules: r.schedules || [],
-        files: r.files || [],
-        studySets: r.study_sets || [],
-        links: r.links || [],
-        day: r.day || undefined,
-        time: r.time || undefined,
-      }));
-    } catch {
-      return [];
+export const getCoursesFn = createServerFn({ method: "GET" }).handler(async () => {
+  if (!sql) return [];
+  try {
+    const rows = await sql`SELECT * FROM courses`;
+    interface DbCourseRow {
+      id: string;
+      name: string;
+      color: "orange" | "blue" | "gray" | "yellow" | "pink" | "green";
+      instructor: string | null;
+      room: string | null;
+      schedules: unknown;
+      files: unknown;
+      study_sets: unknown;
+      links: unknown;
     }
-  });
+    return (rows as unknown as DbCourseRow[]).map((r) => ({
+      id: r.id,
+      name: r.name,
+      color: r.color,
+      instructor: r.instructor || undefined,
+      room: r.room || undefined,
+      schedules: (r.schedules as any[]) || [],
+      files: (r.files as any[]) || [],
+      studySets: (r.study_sets as any[]) || [],
+      links: (r.links as any[]) || [],
+    }));
+  } catch {
+    return [];
+  }
+});
 
 export const saveCourseFn = createServerFn({ method: "POST" })
-  .validator((course: any) => course)
+  .validator((course: unknown) => CourseSchema.parse(course))
   .handler(async ({ data: c }) => {
+    enforceRateLimit(60, 60 * 1000);
     if (!sql) return { success: false };
     await sql`
-      INSERT INTO courses (id, name, color, instructor, room, schedules, files, study_sets, links, day, time)
+      INSERT INTO courses (id, name, color, instructor, room, schedules, files, study_sets, links)
       VALUES (${c.id}, ${c.name}, ${c.color}, ${c.instructor || null}, ${c.room || null}, 
               ${JSON.stringify(c.schedules || [])}, ${JSON.stringify(c.files || [])}, 
-              ${JSON.stringify(c.studySets || [])}, ${JSON.stringify(c.links || [])}, 
-              ${c.day || null}, ${c.time || null})
+              ${JSON.stringify(c.studySets || [])}, ${JSON.stringify(c.links || [])})
       ON CONFLICT (id) DO UPDATE
       SET name = EXCLUDED.name,
           color = EXCLUDED.color,
@@ -75,45 +201,55 @@ export const saveCourseFn = createServerFn({ method: "POST" })
           schedules = EXCLUDED.schedules,
           files = EXCLUDED.files,
           study_sets = EXCLUDED.study_sets,
-          links = EXCLUDED.links,
-          day = EXCLUDED.day,
-          time = EXCLUDED.time;
+          links = EXCLUDED.links;
     `;
     return { success: true };
   });
 
 export const deleteCourseFn = createServerFn({ method: "POST" })
-  .validator((id: string) => id)
+  .validator((id: unknown) => z.string().parse(id))
   .handler(async ({ data: id }) => {
+    enforceRateLimit(60, 60 * 1000);
     if (!sql) return { success: false };
     await sql`DELETE FROM courses WHERE id = ${id}`;
     return { success: true };
   });
 
-export const getTodosFn = createServerFn({ method: "GET" })
-  .handler(async () => {
-    if (!sql) return [];
-    try {
-      const rows = await sql`SELECT * FROM todos ORDER BY created_at DESC`;
-      return rows.map((r: any) => ({
-        id: r.id,
-        title: r.title,
-        label: r.label || undefined,
-        courseId: r.course_id || undefined,
-        description: r.description || undefined,
-        subtasks: r.subtasks || [],
-        deadline: r.deadline || undefined,
-        done: r.done,
-        createdAt: r.created_at,
-      }));
-    } catch {
-      return [];
+export const getTodosFn = createServerFn({ method: "GET" }).handler(async () => {
+  if (!sql) return [];
+  try {
+    const rows = await sql`SELECT * FROM todos ORDER BY created_at DESC`;
+    interface DbTodoRow {
+      id: string;
+      title: string;
+      label: string | null;
+      course_id: string | null;
+      description: string | null;
+      subtasks: unknown;
+      deadline: string | null;
+      done: boolean;
+      created_at: string;
     }
-  });
+    return (rows as unknown as DbTodoRow[]).map((r) => ({
+      id: r.id,
+      title: r.title,
+      label: r.label || undefined,
+      courseId: r.course_id || undefined,
+      description: r.description || undefined,
+      subtasks: (r.subtasks as any[]) || [],
+      deadline: r.deadline || undefined,
+      done: r.done,
+      createdAt: r.created_at,
+    }));
+  } catch {
+    return [];
+  }
+});
 
 export const saveTodoFn = createServerFn({ method: "POST" })
-  .validator((todo: any) => todo)
+  .validator((todo: unknown) => TodoSchema.parse(todo))
   .handler(async ({ data: t }) => {
+    enforceRateLimit(60, 60 * 1000);
     if (!sql) return { success: false };
     await sql`
       INSERT INTO todos (id, title, label, course_id, description, subtasks, deadline, done, created_at)
@@ -133,36 +269,47 @@ export const saveTodoFn = createServerFn({ method: "POST" })
   });
 
 export const deleteTodoFn = createServerFn({ method: "POST" })
-  .validator((id: string) => id)
+  .validator((id: unknown) => z.string().parse(id))
   .handler(async ({ data: id }) => {
+    enforceRateLimit(60, 60 * 1000);
     if (!sql) return { success: false };
     await sql`DELETE FROM todos WHERE id = ${id}`;
     return { success: true };
   });
 
-export const getHabitsFn = createServerFn({ method: "GET" })
-  .handler(async () => {
-    if (!sql) return [];
-    try {
-      const rows = await sql`SELECT * FROM habits`;
-      return rows.map((r: any) => ({
-        id: r.id,
-        name: r.name,
-        icon: r.icon || undefined,
-        target: r.target || undefined,
-        frequency: r.frequency,
-        weekdays: r.weekdays || [],
-        time: r.time || undefined,
-        log: r.log || {},
-      }));
-    } catch {
-      return [];
+export const getHabitsFn = createServerFn({ method: "GET" }).handler(async () => {
+  if (!sql) return [];
+  try {
+    const rows = await sql`SELECT * FROM habits`;
+    interface DbHabitRow {
+      id: string;
+      name: string;
+      icon: string | null;
+      target: string | null;
+      frequency: "daily" | "weekly" | "monthly" | "custom";
+      weekdays: unknown;
+      time: string | null;
+      log: unknown;
     }
-  });
+    return (rows as unknown as DbHabitRow[]).map((r) => ({
+      id: r.id,
+      name: r.name,
+      icon: r.icon || undefined,
+      target: r.target || undefined,
+      frequency: r.frequency,
+      weekdays: (r.weekdays as any[]) || [],
+      time: r.time || undefined,
+      log: (r.log as Record<string, boolean>) || {},
+    }));
+  } catch {
+    return [];
+  }
+});
 
 export const saveHabitFn = createServerFn({ method: "POST" })
-  .validator((habit: any) => habit)
+  .validator((habit: unknown) => HabitSchema.parse(habit))
   .handler(async ({ data: h }) => {
+    enforceRateLimit(60, 60 * 1000);
     if (!sql) return { success: false };
     await sql`
       INSERT INTO habits (id, name, icon, target, frequency, weekdays, time, log)
@@ -181,15 +328,22 @@ export const saveHabitFn = createServerFn({ method: "POST" })
   });
 
 export const deleteHabitFn = createServerFn({ method: "POST" })
-  .validator((id: string) => id)
+  .validator((id: unknown) => z.string().parse(id))
   .handler(async ({ data: id }) => {
+    enforceRateLimit(60, 60 * 1000);
     if (!sql) return { success: false };
     await sql`DELETE FROM habits WHERE id = ${id}`;
     return { success: true };
   });
 
 export const resetDbFn = createServerFn({ method: "POST" })
-  .handler(async () => {
+  .validator((data: { secret?: string }) => data)
+  .handler(async ({ data }) => {
+    enforceRateLimit(3, 10 * 60 * 1000); // 3 resets per 10 minutes
+    const systemSecret = typeof process !== "undefined" ? process.env.RESET_DB_SECRET : undefined;
+    if (systemSecret && data.secret !== systemSecret) {
+      throw new Error("Unauthorized: Invalid reset secret");
+    }
     if (!sql) return { success: false };
     try {
       await sql`TRUNCATE TABLE profile, courses, todos, habits RESTART IDENTITY`;

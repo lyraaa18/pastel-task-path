@@ -4,9 +4,9 @@ const getDatabaseUrl = () => {
   if (typeof process !== "undefined" && process.env && process.env.DATABASE_URL) {
     return process.env.DATABASE_URL;
   }
-  // @ts-ignore
+  // @ts-expect-error
   if (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.DATABASE_URL) {
-    // @ts-ignore
+    // @ts-expect-error
     return import.meta.env.DATABASE_URL;
   }
   return "";
@@ -45,9 +45,7 @@ export async function initializeDatabase() {
         schedules JSONB,
         files JSONB,
         study_sets JSONB,
-        links JSONB,
-        day TEXT,
-        time TEXT
+        links JSONB
       );
     `;
 

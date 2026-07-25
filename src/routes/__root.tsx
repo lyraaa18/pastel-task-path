@@ -79,16 +79,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1" },
       { name: "theme-color", content: "#fcfbf8" },
       { title: "Student OS — Planner & Habits" },
-      { name: "description", content: "A calm student productivity app: courses, to-dos, schedule and habits." },
+      {
+        name: "description",
+        content: "A calm student productivity app: courses, to-dos, schedule and habits.",
+      },
       { property: "og:title", content: "Student OS — Planner & Habits" },
-      { property: "og:description", content: "A calm student productivity app: courses, to-dos, schedule and habits." },
+      {
+        property: "og:description",
+        content: "A calm student productivity app: courses, to-dos, schedule and habits.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600;700&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600;700&display=swap",
+      },
       { rel: "stylesheet", href: appCss },
     ],
   }),

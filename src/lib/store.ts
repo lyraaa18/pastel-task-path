@@ -30,7 +30,7 @@ export type CourseSchedule = {
   id: string;
   days: number[]; // 0=Mon..6=Sun
   start: string; // "HH:mm"
-  end: string;   // "HH:mm"
+  end: string; // "HH:mm"
 };
 
 export type CourseFile = {
@@ -68,9 +68,6 @@ export type Course = {
   files?: CourseFile[];
   studySets?: CourseStudySet[];
   links?: CourseLink[];
-  // legacy fields, kept for older data
-  day?: string;
-  time?: string;
 };
 
 export type HabitFrequency = "daily" | "weekly" | "monthly" | "custom";
@@ -93,7 +90,7 @@ export type Profile = {
   yearLevel: string;
 };
 
-let dbInitPromise: Promise<any> | null = null;
+let dbInitPromise: Promise<unknown> | null = null;
 
 async function ensureDbInitialized() {
   if (!dbInitPromise) {
@@ -116,7 +113,7 @@ class GlobalStore<T> {
   constructor(
     private fallback: T,
     private fetchFn: () => Promise<T>,
-    private saveFn: (val: T, prev: T) => Promise<void>
+    private saveFn: (val: T, prev: T) => Promise<void>,
   ) {
     this.state = fallback;
   }
@@ -205,7 +202,7 @@ function useStoreInstance<T>(store: GlobalStore<T>) {
     (v: T | ((prev: T) => T)) => {
       store.setState(v);
     },
-    [store]
+    [store],
   );
 
   return [state, setAndSave, isLoading] as const;
@@ -223,11 +220,11 @@ const defaultCourses: Course[] = [];
 const defaultHabits: Habit[] = [];
 
 const todosStore = new GlobalStore<Todo[]>([], getTodosFn, async (next, prev) => {
-  const prevIds = new Set(prev.map(t => t.id));
-  const nextIds = new Set(next.map(t => t.id));
+  const prevIds = new Set(prev.map((t) => t.id));
+  const nextIds = new Set(next.map((t) => t.id));
 
   for (const t of next) {
-    const prevItem = prev.find(p => p.id === t.id);
+    const prevItem = prev.find((p) => p.id === t.id);
     if (!prevItem || JSON.stringify(prevItem) !== JSON.stringify(t)) {
       await saveTodoFn({ data: t });
     }
@@ -241,11 +238,11 @@ const todosStore = new GlobalStore<Todo[]>([], getTodosFn, async (next, prev) =>
 });
 
 const coursesStore = new GlobalStore<Course[]>(defaultCourses, getCoursesFn, async (next, prev) => {
-  const prevIds = new Set(prev.map(c => c.id));
-  const nextIds = new Set(next.map(c => c.id));
+  const prevIds = new Set(prev.map((c) => c.id));
+  const nextIds = new Set(next.map((c) => c.id));
 
   for (const c of next) {
-    const prevItem = prev.find(p => p.id === c.id);
+    const prevItem = prev.find((p) => p.id === c.id);
     if (!prevItem || JSON.stringify(prevItem) !== JSON.stringify(c)) {
       await saveCourseFn({ data: c });
     }
@@ -259,11 +256,11 @@ const coursesStore = new GlobalStore<Course[]>(defaultCourses, getCoursesFn, asy
 });
 
 const habitsStore = new GlobalStore<Habit[]>(defaultHabits, getHabitsFn, async (next, prev) => {
-  const prevIds = new Set(prev.map(h => h.id));
-  const nextIds = new Set(next.map(h => h.id));
+  const prevIds = new Set(prev.map((h) => h.id));
+  const nextIds = new Set(next.map((h) => h.id));
 
   for (const h of next) {
-    const prevItem = prev.find(p => p.id === h.id);
+    const prevItem = prev.find((p) => p.id === h.id);
     if (!prevItem || JSON.stringify(prevItem) !== JSON.stringify(h)) {
       await saveHabitFn({ data: h });
     }
@@ -276,17 +273,23 @@ const habitsStore = new GlobalStore<Habit[]>(defaultHabits, getHabitsFn, async (
   }
 });
 
-const profileStore = new GlobalStore<Profile>(defaultProfile, async () => {
-  const p = await getProfileFn();
-  return p ? {
-    name: p.name,
-    school: p.school,
-    birthday: p.birthday,
-    yearLevel: p.year_level,
-  } : defaultProfile;
-}, async (next) => {
-  await updateProfileFn({ data: next });
-});
+const profileStore = new GlobalStore<Profile>(
+  defaultProfile,
+  async () => {
+    const p = await getProfileFn();
+    return p
+      ? {
+          name: p.name,
+          school: p.school,
+          birthday: p.birthday,
+          yearLevel: p.year_level,
+        }
+      : defaultProfile;
+  },
+  async (next) => {
+    await updateProfileFn({ data: next });
+  },
+);
 
 export const useTodos = () => useStoreInstance(todosStore);
 export const useCourses = () => useStoreInstance(coursesStore);
@@ -300,7 +303,12 @@ export function resetAllStores() {
   profileStore.reset();
 }
 
-export const uid = () => Math.random().toString(36).slice(2, 10);
+export const uid = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2, 10);
+};
 
 export const fmtDate = (d = new Date()) =>
   d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });

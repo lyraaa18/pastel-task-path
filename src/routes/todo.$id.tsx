@@ -19,7 +19,11 @@ function TodoDetail() {
   const isLoading = isTodosLoading || isCoursesLoading;
 
   if (isLoading) {
-    return <MobileShell isLoading={true}><div>Loading...</div></MobileShell>;
+    return (
+      <MobileShell isLoading={true}>
+        <div>Loading...</div>
+      </MobileShell>
+    );
   }
 
   const todo = todos.find((t) => t.id === id);
@@ -29,7 +33,9 @@ function TodoDetail() {
       <MobileShell>
         <div className="p-10 text-center text-muted-foreground">
           Task not found.
-          <button onClick={() => nav({ to: "/" })} className="block mx-auto mt-4 text-sm underline">Back home</button>
+          <button onClick={() => nav({ to: "/" })} className="block mx-auto mt-4 text-sm underline">
+            Back home
+          </button>
         </div>
       </MobileShell>
     );
@@ -44,8 +50,10 @@ function TodoDetail() {
   const toggleSub = (sid: string) =>
     setTodos((prev) =>
       prev.map((t) =>
-        t.id === id ? { ...t, subtasks: t.subtasks.map((s) => (s.id === sid ? { ...s, done: !s.done } : s)) } : t
-      )
+        t.id === id
+          ? { ...t, subtasks: t.subtasks.map((s) => (s.id === sid ? { ...s, done: !s.done } : s)) }
+          : t,
+      ),
     );
 
   const remove = () => {
@@ -57,7 +65,10 @@ function TodoDetail() {
   return (
     <MobileShell>
       <header className="px-6 pt-10 pb-4 flex items-center justify-between">
-        <button onClick={() => nav({ to: "/" })} className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center">
+        <button
+          onClick={() => nav({ to: "/" })}
+          className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center"
+        >
           <ChevronLeft className="w-5 h-5" />
         </button>
         <h1 className="font-serif text-xl italic">Task</h1>
@@ -69,7 +80,10 @@ function TodoDetail() {
           >
             <Pencil className="w-4 h-4" />
           </Link>
-          <button onClick={remove} className="w-9 h-9 rounded-full bg-destructive/15 text-destructive flex items-center justify-center">
+          <button
+            onClick={remove}
+            className="w-9 h-9 rounded-full bg-destructive/15 text-destructive flex items-center justify-center"
+          >
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
@@ -88,7 +102,12 @@ function TodoDetail() {
               {todo.done && <span className="text-primary-foreground text-xs">✓</span>}
             </button>
             <div className="flex-1">
-              <div className={"font-serif text-2xl italic " + (todo.done ? "line-through text-muted-foreground" : "")}>
+              <div
+                className={
+                  "font-serif text-2xl italic " +
+                  (todo.done ? "line-through text-muted-foreground" : "")
+                }
+              >
                 {todo.title}
               </div>
             </div>
@@ -107,7 +126,11 @@ function TodoDetail() {
             <span className="ml-auto font-medium">
               {todo.deadline
                 ? new Date(todo.deadline).toLocaleString("en-GB", {
-                    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })
                 : "No deadline"}
             </span>
@@ -115,7 +138,9 @@ function TodoDetail() {
         </div>
 
         <div className="mt-6">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Description</div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+            Description
+          </div>
           <div className="rounded-2xl border border-border p-4 text-sm min-h-[80px] whitespace-pre-wrap">
             {todo.description || <span className="text-muted-foreground">No description.</span>}
           </div>
@@ -130,7 +155,10 @@ function TodoDetail() {
           ) : (
             <ul className="space-y-2">
               {todo.subtasks.map((s) => (
-                <li key={s.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
+                <li
+                  key={s.id}
+                  className="flex items-center gap-3 rounded-xl border border-border p-3"
+                >
                   <button
                     onClick={() => toggleSub(s.id)}
                     className={
@@ -140,7 +168,11 @@ function TodoDetail() {
                   >
                     {s.done && <span className="text-primary-foreground text-[10px]">✓</span>}
                   </button>
-                  <span className={"text-sm " + (s.done ? "line-through text-muted-foreground" : "")}>{s.title}</span>
+                  <span
+                    className={"text-sm " + (s.done ? "line-through text-muted-foreground" : "")}
+                  >
+                    {s.title}
+                  </span>
                 </li>
               ))}
             </ul>

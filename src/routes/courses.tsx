@@ -45,7 +45,12 @@ function CoursesPage() {
         <h1 className="font-serif text-3xl italic">Courses</h1>
         <button
           onClick={() => setManage((m) => !m)}
-          className={"text-xs px-3 py-1.5 rounded-full border " + (manage ? "bg-pastel-yellow border-pastel-yellow font-semibold" : "border-border text-muted-foreground")}
+          className={
+            "text-xs px-3 py-1.5 rounded-full border " +
+            (manage
+              ? "bg-pastel-yellow border-pastel-yellow font-semibold"
+              : "border-border text-muted-foreground")
+          }
         >
           {manage ? "Done" : "Manage"}
         </button>
@@ -67,8 +72,12 @@ function CoursesPage() {
         {filtered.map((c) => (
           <div key={c.id} className="relative">
             <Link to="/courses/$id" params={{ id: c.id }} className="block">
-              <div className={`h-4 w-2/3 rounded-t-xl ${colorMap[c.color]} border border-b-0 border-foreground/10`} />
-              <div className={`rounded-2xl rounded-tl-none ${colorMap[c.color]} aspect-square border border-foreground/10 shadow-sm flex items-end p-3`}>
+              <div
+                className={`h-4 w-2/3 rounded-t-xl ${colorMap[c.color]} border border-b-0 border-foreground/10`}
+              />
+              <div
+                className={`rounded-2xl rounded-tl-none ${colorMap[c.color]} aspect-square border border-foreground/10 shadow-sm flex items-end p-3`}
+              >
                 <span className="text-[11px] uppercase tracking-wider font-semibold bg-card/70 backdrop-blur px-2 py-1 rounded-md">
                   {c.name}
                 </span>
