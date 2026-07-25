@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestIP, getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { auth } from "@clerk/tanstack-react-start/server";
 import { sql, initializeDatabase } from "./db";
 import { rateLimit } from "./rateLimit";
 
@@ -128,7 +129,9 @@ export const initializeDbFn = createServerFn({ method: "POST" }).handler(async (
 export const getProfileFn = createServerFn({ method: "GET" }).handler(async () => {
   if (!sql) return null;
   try {
-    const rows = await sql`SELECT * FROM profile LIMIT 1`;
+    const { userId } = await auth();
+    if (!userId) return null;
+    const rows = await sql`SELECT * FROM profile WHERE id = ${userId}`;
     return rows[0] || null;
   } catch {
     return null;
@@ -140,9 +143,11 @@ export const updateProfileFn = createServerFn({ method: "POST" })
   .handler(async ({ data: p }) => {
     enforceRateLimit(60, 60 * 1000); // 60 requests per minute
     if (!sql) return { success: false };
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
     await sql`
       INSERT INTO profile (id, name, school, birthday, year_level)
-      VALUES ('user', ${p.name}, ${p.school}, ${p.birthday}, ${p.yearLevel})
+      VALUES (${userId}, ${p.name}, ${p.school}, ${p.birthday}, ${p.yearLevel})
       ON CONFLICT (id) DO UPDATE
       SET name = EXCLUDED.name,
           school = EXCLUDED.school,
@@ -155,7 +160,9 @@ export const updateProfileFn = createServerFn({ method: "POST" })
 export const getCoursesFn = createServerFn({ method: "GET" }).handler(async () => {
   if (!sql) return [];
   try {
-    const rows = await sql`SELECT * FROM courses`;
+    const { userId } = await auth();
+    if (!userId) return [];
+    const rows = await sql`SELECT * FROM courses WHERE user_id = ${userId}`;
     interface DbCourseRow {
       id: string;
       name: string;
@@ -188,9 +195,18 @@ export const saveCourseFn = createServerFn({ method: "POST" })
   .handler(async ({ data: c }) => {
     enforceRateLimit(60, 60 * 1000);
     if (!sql) return { success: false };
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    // Verify ownership
+    const existing = await sql`SELECT user_id FROM courses WHERE id = ${c.id}`;
+    if (existing.length > 0 && existing[0].user_id !== userId) {
+      throw new Error("Unauthorized");
+    }
+
     await sql`
-      INSERT INTO courses (id, name, color, instructor, room, schedules, files, study_sets, links)
-      VALUES (${c.id}, ${c.name}, ${c.color}, ${c.instructor || null}, ${c.room || null}, 
+      INSERT INTO courses (id, user_id, name, color, instructor, room, schedules, files, study_sets, links)
+      VALUES (${c.id}, ${userId}, ${c.name}, ${c.color}, ${c.instructor || null}, ${c.room || null}, 
               ${JSON.stringify(c.schedules || [])}, ${JSON.stringify(c.files || [])}, 
               ${JSON.stringify(c.studySets || [])}, ${JSON.stringify(c.links || [])})
       ON CONFLICT (id) DO UPDATE
@@ -211,6 +227,15 @@ export const deleteCourseFn = createServerFn({ method: "POST" })
   .handler(async ({ data: id }) => {
     enforceRateLimit(60, 60 * 1000);
     if (!sql) return { success: false };
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    // Verify ownership
+    const existing = await sql`SELECT user_id FROM courses WHERE id = ${id}`;
+    if (existing.length > 0 && existing[0].user_id !== userId) {
+      throw new Error("Unauthorized");
+    }
+
     await sql`DELETE FROM courses WHERE id = ${id}`;
     return { success: true };
   });
@@ -218,7 +243,9 @@ export const deleteCourseFn = createServerFn({ method: "POST" })
 export const getTodosFn = createServerFn({ method: "GET" }).handler(async () => {
   if (!sql) return [];
   try {
-    const rows = await sql`SELECT * FROM todos ORDER BY created_at DESC`;
+    const { userId } = await auth();
+    if (!userId) return [];
+    const rows = await sql`SELECT * FROM todos WHERE user_id = ${userId} ORDER BY created_at DESC`;
     interface DbTodoRow {
       id: string;
       title: string;
@@ -251,9 +278,18 @@ export const saveTodoFn = createServerFn({ method: "POST" })
   .handler(async ({ data: t }) => {
     enforceRateLimit(60, 60 * 1000);
     if (!sql) return { success: false };
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    // Verify ownership
+    const existing = await sql`SELECT user_id FROM todos WHERE id = ${t.id}`;
+    if (existing.length > 0 && existing[0].user_id !== userId) {
+      throw new Error("Unauthorized");
+    }
+
     await sql`
-      INSERT INTO todos (id, title, label, course_id, description, subtasks, deadline, done, created_at)
-      VALUES (${t.id}, ${t.title}, ${t.label || null}, ${t.courseId || null}, ${t.description || null}, 
+      INSERT INTO todos (id, user_id, title, label, course_id, description, subtasks, deadline, done, created_at)
+      VALUES (${t.id}, ${userId}, ${t.title}, ${t.label || null}, ${t.courseId || null}, ${t.description || null}, 
               ${JSON.stringify(t.subtasks || [])}, ${t.deadline || null}, ${t.done}, ${t.createdAt})
       ON CONFLICT (id) DO UPDATE
       SET title = EXCLUDED.title,
@@ -273,6 +309,15 @@ export const deleteTodoFn = createServerFn({ method: "POST" })
   .handler(async ({ data: id }) => {
     enforceRateLimit(60, 60 * 1000);
     if (!sql) return { success: false };
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    // Verify ownership
+    const existing = await sql`SELECT user_id FROM todos WHERE id = ${id}`;
+    if (existing.length > 0 && existing[0].user_id !== userId) {
+      throw new Error("Unauthorized");
+    }
+
     await sql`DELETE FROM todos WHERE id = ${id}`;
     return { success: true };
   });
@@ -280,7 +325,9 @@ export const deleteTodoFn = createServerFn({ method: "POST" })
 export const getHabitsFn = createServerFn({ method: "GET" }).handler(async () => {
   if (!sql) return [];
   try {
-    const rows = await sql`SELECT * FROM habits`;
+    const { userId } = await auth();
+    if (!userId) return [];
+    const rows = await sql`SELECT * FROM habits WHERE user_id = ${userId}`;
     interface DbHabitRow {
       id: string;
       name: string;
@@ -311,9 +358,18 @@ export const saveHabitFn = createServerFn({ method: "POST" })
   .handler(async ({ data: h }) => {
     enforceRateLimit(60, 60 * 1000);
     if (!sql) return { success: false };
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    // Verify ownership
+    const existing = await sql`SELECT user_id FROM habits WHERE id = ${h.id}`;
+    if (existing.length > 0 && existing[0].user_id !== userId) {
+      throw new Error("Unauthorized");
+    }
+
     await sql`
-      INSERT INTO habits (id, name, icon, target, frequency, weekdays, time, log)
-      VALUES (${h.id}, ${h.name}, ${h.icon || null}, ${h.target || null}, ${h.frequency}, 
+      INSERT INTO habits (id, user_id, name, icon, target, frequency, weekdays, time, log)
+      VALUES (${h.id}, ${userId}, ${h.name}, ${h.icon || null}, ${h.target || null}, ${h.frequency}, 
               ${JSON.stringify(h.weekdays || [])}, ${h.time || null}, ${JSON.stringify(h.log || {})})
       ON CONFLICT (id) DO UPDATE
       SET name = EXCLUDED.name,
@@ -332,6 +388,15 @@ export const deleteHabitFn = createServerFn({ method: "POST" })
   .handler(async ({ data: id }) => {
     enforceRateLimit(60, 60 * 1000);
     if (!sql) return { success: false };
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    // Verify ownership
+    const existing = await sql`SELECT user_id FROM habits WHERE id = ${id}`;
+    if (existing.length > 0 && existing[0].user_id !== userId) {
+      throw new Error("Unauthorized");
+    }
+
     await sql`DELETE FROM habits WHERE id = ${id}`;
     return { success: true };
   });
@@ -344,9 +409,14 @@ export const resetDbFn = createServerFn({ method: "POST" })
     if (systemSecret && data.secret !== systemSecret) {
       throw new Error("Unauthorized: Invalid reset secret");
     }
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
     if (!sql) return { success: false };
     try {
-      await sql`TRUNCATE TABLE profile, courses, todos, habits RESTART IDENTITY`;
+      await sql`DELETE FROM profile WHERE id = ${userId}`;
+      await sql`DELETE FROM courses WHERE user_id = ${userId}`;
+      await sql`DELETE FROM todos WHERE user_id = ${userId}`;
+      await sql`DELETE FROM habits WHERE user_id = ${userId}`;
       return { success: true };
     } catch (err) {
       console.error("Failed to reset database:", err);

@@ -38,6 +38,7 @@ export async function initializeDatabase() {
     await sql`
       CREATE TABLE IF NOT EXISTS courses (
         id VARCHAR(50) PRIMARY KEY,
+        user_id VARCHAR(100),
         name TEXT NOT NULL,
         color VARCHAR(20) NOT NULL,
         instructor TEXT,
@@ -48,11 +49,14 @@ export async function initializeDatabase() {
         links JSONB
       );
     `;
+    await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS user_id VARCHAR(100);`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_courses_user_id ON courses(user_id);`;
 
     // Create Todos Table
     await sql`
       CREATE TABLE IF NOT EXISTS todos (
         id VARCHAR(50) PRIMARY KEY,
+        user_id VARCHAR(100),
         title TEXT NOT NULL,
         label TEXT,
         course_id VARCHAR(50),
@@ -63,11 +67,14 @@ export async function initializeDatabase() {
         created_at TEXT
       );
     `;
+    await sql`ALTER TABLE todos ADD COLUMN IF NOT EXISTS user_id VARCHAR(100);`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_todos_user_id ON todos(user_id);`;
 
     // Create Habits Table
     await sql`
       CREATE TABLE IF NOT EXISTS habits (
         id VARCHAR(50) PRIMARY KEY,
+        user_id VARCHAR(100),
         name TEXT NOT NULL,
         icon TEXT,
         target TEXT,
@@ -77,6 +84,8 @@ export async function initializeDatabase() {
         log JSONB
       );
     `;
+    await sql`ALTER TABLE habits ADD COLUMN IF NOT EXISTS user_id VARCHAR(100);`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_habits_user_id ON habits(user_id);`;
 
     console.log("Database tables checked/created successfully.");
   } catch (error) {

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
 import { useProfile, resetAllStores } from "@/lib/store";
 import { resetDbFn } from "@/lib/dbServer";
+import { useClerk, UserButton } from "@clerk/tanstack-react-start";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -15,12 +16,16 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsPage() {
   const [profile, setProfile] = useProfile();
+  const { signOut } = useClerk();
 
   return (
     <MobileShell>
-      <header className="px-6 pt-10 pb-4">
-        <h1 className="font-serif text-3xl italic">Settings</h1>
-        <p className="text-sm text-muted-foreground mt-1">Personalize your Student ID.</p>
+      <header className="px-6 pt-10 pb-4 flex justify-between items-center">
+        <div>
+          <h1 className="font-serif text-3xl italic">Settings</h1>
+          <p className="text-sm text-muted-foreground mt-1">Personalize your Student ID.</p>
+        </div>
+        <UserButton />
       </header>
 
       <section className="px-6 mt-4 space-y-4">
@@ -34,6 +39,17 @@ function SettingsPage() {
             />
           </div>
         ))}
+        <button
+          onClick={async () => {
+            await signOut();
+            localStorage.clear();
+            resetAllStores();
+            location.reload();
+          }}
+          className="mt-6 w-full py-3 rounded-xl bg-[#2C2925] hover:bg-[#3E3A36] text-white text-sm font-semibold transition-colors"
+        >
+          Log out
+        </button>
         <button
           onClick={async () => {
             if (confirm("Reset all app data (including Neon Database)?")) {
@@ -53,7 +69,7 @@ function SettingsPage() {
               }
             }
           }}
-          className="mt-6 w-full py-3 rounded-xl border border-destructive/40 text-destructive text-sm font-semibold"
+          className="w-full py-3 rounded-xl border border-destructive/40 text-destructive text-sm font-semibold bg-transparent hover:bg-destructive/5 transition-colors"
         >
           Reset all data
         </button>
