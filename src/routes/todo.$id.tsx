@@ -13,8 +13,14 @@ export const Route = createFileRoute("/todo/$id")({
 function TodoDetail() {
   const { id } = Route.useParams();
   const nav = useNavigate();
-  const [todos, setTodos] = useTodos();
-  const [courses] = useCourses();
+  const [todos, setTodos, isTodosLoading] = useTodos();
+  const [courses, , isCoursesLoading] = useCourses();
+
+  const isLoading = isTodosLoading || isCoursesLoading;
+
+  if (isLoading) {
+    return <MobileShell isLoading={true}><div>Loading...</div></MobileShell>;
+  }
 
   const todo = todos.find((t) => t.id === id);
 

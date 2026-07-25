@@ -1,4 +1,18 @@
 import { useEffect, useState, useCallback } from "react";
+import {
+  initializeDbFn,
+  getProfileFn,
+  updateProfileFn,
+  getCoursesFn,
+  saveCourseFn,
+  deleteCourseFn,
+  getTodosFn,
+  saveTodoFn,
+  deleteTodoFn,
+  getHabitsFn,
+  saveHabitFn,
+  deleteHabitFn,
+} from "./dbServer";
 
 export type Todo = {
   id: string;
@@ -19,6 +33,31 @@ export type CourseSchedule = {
   end: string;   // "HH:mm"
 };
 
+export type CourseFile = {
+  id: string;
+  name: string;
+  size: string;
+  date: string;
+};
+
+export type Flashcard = {
+  id: string;
+  question: string;
+  answer: string;
+};
+
+export type CourseStudySet = {
+  id: string;
+  title: string;
+  cards: Flashcard[];
+};
+
+export type CourseLink = {
+  id: string;
+  title: string;
+  url: string;
+};
+
 export type Course = {
   id: string;
   name: string;
@@ -26,6 +65,9 @@ export type Course = {
   instructor?: string;
   room?: string;
   schedules?: CourseSchedule[];
+  files?: CourseFile[];
+  studySets?: CourseStudySet[];
+  links?: CourseLink[];
   // legacy fields, kept for older data
   day?: string;
   time?: string;
@@ -44,13 +86,6 @@ export type Habit = {
   log: Record<string, boolean>;
 };
 
-const KEYS = {
-  todos: "spa.todos",
-  courses: "spa.courses",
-  habits: "spa.habits",
-  profile: "spa.profile",
-};
-
 export type Profile = {
   name: string;
   school: string;
@@ -58,73 +93,212 @@ export type Profile = {
   yearLevel: string;
 };
 
-function read<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
-  try {
-    const v = localStorage.getItem(key);
-    return v ? (JSON.parse(v) as T) : fallback;
-  } catch {
-    return fallback;
+let dbInitPromise: Promise<any> | null = null;
+
+async function ensureDbInitialized() {
+  if (!dbInitPromise) {
+    dbInitPromise = initializeDbFn().catch((err) => {
+      dbInitPromise = null;
+      throw err;
+    });
+  }
+  return dbInitPromise;
+}
+
+type Listener<T> = (val: T) => void;
+
+class GlobalStore<T> {
+  private state: T;
+  private listeners = new Set<Listener<T>>();
+  private fetchPromise: Promise<T> | null = null;
+  private hasLoaded = false;
+
+  constructor(
+    private fallback: T,
+    private fetchFn: () => Promise<T>,
+    private saveFn: (val: T, prev: T) => Promise<void>
+  ) {
+    this.state = fallback;
+  }
+
+  getState() {
+    return this.state;
+  }
+
+  async load() {
+    if (this.hasLoaded) return this.state;
+    if (!this.fetchPromise) {
+      this.fetchPromise = (async () => {
+        try {
+          await ensureDbInitialized();
+          const dbData = await this.fetchFn();
+          if (dbData !== null && dbData !== undefined) {
+            this.state = dbData;
+            this.hasLoaded = true;
+            this.notify();
+          }
+        } catch (err) {
+          console.warn("Failed to load from DB:", err);
+        }
+        return this.state;
+      })();
+    }
+    return this.fetchPromise;
+  }
+
+  isLoaded() {
+    return this.hasLoaded;
+  }
+
+  setState(v: T | ((prev: T) => T)) {
+    const prev = this.state;
+    const next = typeof v === "function" ? (v as (p: T) => T)(prev) : v;
+    this.state = next;
+    this.notify();
+
+    this.saveFn(next, prev).catch((err) => {
+      console.error("Failed to save to database:", err);
+    });
+  }
+
+  reset() {
+    this.state = this.fallback;
+    this.hasLoaded = false;
+    this.fetchPromise = null;
+    this.notify();
+  }
+
+  subscribe(listener: Listener<T>) {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  private notify() {
+    this.listeners.forEach((l) => l(this.state));
   }
 }
 
-function write<T>(key: string, value: T) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(key, JSON.stringify(value));
-  window.dispatchEvent(new StorageEvent("storage", { key }));
-}
+function useStoreInstance<T>(store: GlobalStore<T>) {
+  const [state, setState] = useState<T>(store.getState());
+  const [isLoading, setIsLoading] = useState(!store.isLoaded());
 
-function useStored<T>(key: string, fallback: T) {
-  const [state, setState] = useState<T>(fallback);
   useEffect(() => {
-    setState(read(key, fallback));
-    const onChange = (e: StorageEvent) => {
-      if (!e.key || e.key === key) setState(read(key, fallback));
-    };
-    window.addEventListener("storage", onChange);
-    return () => window.removeEventListener("storage", onChange);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
-  const setAndWrite = useCallback(
-    (v: T | ((prev: T) => T)) => {
-      setState((prev) => {
-        const next = typeof v === "function" ? (v as (p: T) => T)(prev) : v;
-        write(key, next);
-        return next;
+    const unsubscribe = store.subscribe((nextState) => {
+      setState(nextState);
+    });
+
+    if (!store.isLoaded()) {
+      setIsLoading(true);
+      store.load().finally(() => {
+        setIsLoading(false);
       });
+    } else {
+      setIsLoading(false);
+    }
+
+    return unsubscribe;
+  }, [store]);
+
+  const setAndSave = useCallback(
+    (v: T | ((prev: T) => T)) => {
+      store.setState(v);
     },
-    [key]
+    [store]
   );
-  return [state, setAndWrite] as const;
+
+  return [state, setAndSave, isLoading] as const;
 }
 
 const defaultProfile: Profile = {
-  name: "Chaemdara",
-  school: "KU",
-  birthday: "19-04-2002",
-  yearLevel: "<3 Electric",
+  name: "Student",
+  school: "",
+  birthday: "",
+  yearLevel: "",
 };
 
-const defaultCourses: Course[] = [
-  { id: "c1", name: "Analisa Malware", color: "orange", instructor: "Mr. J", room: "K",
-    schedules: [{ id: "s1", days: [1], start: "14:39", end: "15:39" }] },
-  { id: "c2", name: "Blockchain", color: "blue", instructor: "Mrs. A", room: "B2",
-    schedules: [{ id: "s2", days: [2], start: "10:00", end: "11:30" }] },
-  { id: "c3", name: "Bootcamp", color: "gray", instructor: "Mr. K", room: "Lab",
-    schedules: [{ id: "s3", days: [4], start: "09:00", end: "12:00" }] },
-];
+const defaultCourses: Course[] = [];
 
-const defaultHabits: Habit[] = [
-  { id: "h1", name: "Drink Water", icon: "💧", target: "8 glass", frequency: "daily", log: {} },
-  { id: "h2", name: "Study 1 Hour", icon: "📖", target: "Focus time", frequency: "daily", log: {} },
-  { id: "h3", name: "Exercise", icon: "🏋️", target: "30 minutes", frequency: "weekly", log: {} },
-  { id: "h4", name: "Read", icon: "📚", target: "10 pages", frequency: "daily", log: {} },
-];
+const defaultHabits: Habit[] = [];
 
-export const useTodos = () => useStored<Todo[]>(KEYS.todos, []);
-export const useCourses = () => useStored<Course[]>(KEYS.courses, defaultCourses);
-export const useHabits = () => useStored<Habit[]>(KEYS.habits, defaultHabits);
-export const useProfile = () => useStored<Profile>(KEYS.profile, defaultProfile);
+const todosStore = new GlobalStore<Todo[]>([], getTodosFn, async (next, prev) => {
+  const prevIds = new Set(prev.map(t => t.id));
+  const nextIds = new Set(next.map(t => t.id));
+
+  for (const t of next) {
+    const prevItem = prev.find(p => p.id === t.id);
+    if (!prevItem || JSON.stringify(prevItem) !== JSON.stringify(t)) {
+      await saveTodoFn({ data: t });
+    }
+  }
+
+  for (const id of prevIds) {
+    if (!nextIds.has(id)) {
+      await deleteTodoFn({ data: id });
+    }
+  }
+});
+
+const coursesStore = new GlobalStore<Course[]>(defaultCourses, getCoursesFn, async (next, prev) => {
+  const prevIds = new Set(prev.map(c => c.id));
+  const nextIds = new Set(next.map(c => c.id));
+
+  for (const c of next) {
+    const prevItem = prev.find(p => p.id === c.id);
+    if (!prevItem || JSON.stringify(prevItem) !== JSON.stringify(c)) {
+      await saveCourseFn({ data: c });
+    }
+  }
+
+  for (const id of prevIds) {
+    if (!nextIds.has(id)) {
+      await deleteCourseFn({ data: id });
+    }
+  }
+});
+
+const habitsStore = new GlobalStore<Habit[]>(defaultHabits, getHabitsFn, async (next, prev) => {
+  const prevIds = new Set(prev.map(h => h.id));
+  const nextIds = new Set(next.map(h => h.id));
+
+  for (const h of next) {
+    const prevItem = prev.find(p => p.id === h.id);
+    if (!prevItem || JSON.stringify(prevItem) !== JSON.stringify(h)) {
+      await saveHabitFn({ data: h });
+    }
+  }
+
+  for (const id of prevIds) {
+    if (!nextIds.has(id)) {
+      await deleteHabitFn({ data: id });
+    }
+  }
+});
+
+const profileStore = new GlobalStore<Profile>(defaultProfile, async () => {
+  const p = await getProfileFn();
+  return p ? {
+    name: p.name,
+    school: p.school,
+    birthday: p.birthday,
+    yearLevel: p.year_level,
+  } : defaultProfile;
+}, async (next) => {
+  await updateProfileFn({ data: next });
+});
+
+export const useTodos = () => useStoreInstance(todosStore);
+export const useCourses = () => useStoreInstance(coursesStore);
+export const useHabits = () => useStoreInstance(habitsStore);
+export const useProfile = () => useStoreInstance(profileStore);
+
+export function resetAllStores() {
+  todosStore.reset();
+  coursesStore.reset();
+  habitsStore.reset();
+  profileStore.reset();
+}
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
 

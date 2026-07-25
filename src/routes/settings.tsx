@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
-import { useProfile } from "@/lib/store";
+import { useProfile, resetAllStores } from "@/lib/store";
+import { resetDbFn } from "@/lib/dbServer";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Settings — Student OS" }, { name: "description", content: "Edit your profile." }] }),
@@ -29,10 +30,17 @@ function SettingsPage() {
           </div>
         ))}
         <button
-          onClick={() => {
-            if (confirm("Reset all app data?")) {
-              localStorage.clear();
-              location.reload();
+          onClick={async () => {
+            if (confirm("Reset all app data (including Neon Database)?")) {
+              try {
+                localStorage.clear();
+                resetAllStores();
+                await resetDbFn();
+                location.reload();
+              } catch (err) {
+                console.error(err);
+                alert("Failed to reset database.");
+              }
             }
           }}
           className="mt-6 w-full py-3 rounded-xl border border-destructive/40 text-destructive text-sm font-semibold"

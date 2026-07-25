@@ -15,10 +15,12 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const [profile] = useProfile();
-  const [todos, setTodos] = useTodos();
-  const [courses] = useCourses();
+  const [profile, setProfile, isProfileLoading] = useProfile();
+  const [todos, setTodos, isTodosLoading] = useTodos();
+  const [courses, , isCoursesLoading] = useCourses();
   const [filter, setFilter] = useState<"Ongoing" | "Done">("Ongoing");
+
+  const isLoading = isProfileLoading || isTodosLoading || isCoursesLoading;
 
   const today = new Date();
   const dateLabel = today.toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" });
@@ -26,7 +28,7 @@ function Home() {
   const visible = todos.filter((t) => (filter === "Ongoing" ? !t.done : t.done)).slice(0, 4);
 
   return (
-    <MobileShell>
+    <MobileShell isLoading={isLoading}>
       <header className="px-6 pt-10 pb-4 flex items-start justify-between">
         <div>
           <h1 className="font-serif text-3xl italic leading-tight">Hello, {profile.name}</h1>

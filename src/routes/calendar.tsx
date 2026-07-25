@@ -9,8 +9,9 @@ export const Route = createFileRoute("/calendar")({
 });
 
 function CalendarPage() {
-  const [todos] = useTodos();
-  const [courses] = useCourses();
+  const [todos, , isTodosLoading] = useTodos();
+  const [courses, , isCoursesLoading] = useCourses();
+  const isLoading = isTodosLoading || isCoursesLoading;
   const [cursor, setCursor] = useState(new Date());
   const [selected, setSelected] = useState<string>(ymd(new Date()));
 
@@ -44,7 +45,7 @@ function CalendarPage() {
   });
 
   return (
-    <MobileShell>
+    <MobileShell isLoading={isLoading}>
       <header className="px-6 pt-10 pb-4 flex items-center justify-between">
         <h1 className="font-serif text-3xl italic">Calendar</h1>
       </header>

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
 import { useCourses, type Course } from "@/lib/store";
 import { Search, Plus, Trash2 } from "lucide-react";
@@ -25,15 +25,22 @@ const colorMap: Record<Course["color"], string> = {
 };
 
 function CoursesPage() {
-  const [courses, setCourses] = useCourses();
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const [courses, setCourses, isLoading] = useCourses();
   const [q, setQ] = useState("");
   const [adding, setAdding] = useState(false);
   const [manage, setManage] = useState(false);
 
+  const isIndex = path === "/courses" || path === "/courses/";
+
+  if (!isIndex) {
+    return <Outlet />;
+  }
+
   const filtered = courses.filter((c) => c.name.toLowerCase().includes(q.toLowerCase()));
 
   return (
-    <MobileShell>
+    <MobileShell isLoading={isLoading}>
       <header className="px-6 pt-10 pb-4 flex items-center justify-between">
         <h1 className="font-serif text-3xl italic">Courses</h1>
         <button
@@ -85,7 +92,7 @@ function CoursesPage() {
 
       <button
         onClick={() => setAdding(true)}
-        className="fixed bottom-24 right-[calc(50%-200px)] sm:right-6 w-14 h-14 rounded-full bg-foreground text-primary-foreground flex items-center justify-center shadow-lg z-30"
+        className="fixed bottom-24 right-6 sm:right-[calc(50%-200px)] w-14 h-14 rounded-full bg-foreground text-primary-foreground flex items-center justify-center shadow-lg z-30"
       >
         <Plus className="w-6 h-6" />
       </button>

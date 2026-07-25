@@ -11,11 +11,26 @@ const tabs = [
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
-export function MobileShell({ children }: { children: ReactNode }) {
+export function MobileShell({ children, isLoading }: { children: ReactNode; isLoading?: boolean }) {
   return (
     <div className="min-h-screen w-full bg-background flex justify-center">
       <div className="w-full max-w-[440px] min-h-screen bg-background relative pb-24">
-        {children}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center min-h-[80vh] px-6">
+            <div className="relative w-16 h-16">
+              <div className="absolute inset-0 rounded-full bg-pastel-yellow/40 animate-ping" />
+              <div className="absolute inset-2 rounded-full bg-pastel-blue/60 animate-pulse" />
+              <div className="absolute inset-4 rounded-full bg-pastel-green/80 flex items-center justify-center text-sm">
+                🎓
+              </div>
+            </div>
+            <p className="mt-4 text-xs font-serif italic text-muted-foreground animate-pulse">
+              Loading database...
+            </p>
+          </div>
+        ) : (
+          children
+        )}
         <BottomNav />
       </div>
     </div>

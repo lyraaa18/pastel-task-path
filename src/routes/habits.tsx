@@ -15,7 +15,7 @@ const dayShort = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const weekdayShort = ["S", "M", "T", "W", "T", "F", "S"];
 
 function HabitsPage() {
-  const [habits, setHabits] = useHabits();
+  const [habits, setHabits, isLoading] = useHabits();
   const today = new Date();
   const week = startOfWeek(today);
   const [selected, setSelected] = useState(ymd(today));
@@ -44,7 +44,13 @@ function HabitsPage() {
   const streak = (h: { log: Record<string, boolean> }) => {
     let s = 0;
     const d = new Date(today);
-    while (h.log[ymd(d)]) { s++; d.setDate(d.getDate() - 1); }
+    if (!h.log[ymd(d)]) {
+      d.setDate(d.getDate() - 1);
+    }
+    while (h.log[ymd(d)]) {
+      s++;
+      d.setDate(d.getDate() - 1);
+    }
     return s;
   };
 
@@ -64,7 +70,7 @@ function HabitsPage() {
   };
 
   return (
-    <MobileShell>
+    <MobileShell isLoading={isLoading}>
       <header className="px-6 pt-10 pb-2 flex items-center justify-between">
         <h1 className="font-serif text-3xl italic">Habits</h1>
         <button
