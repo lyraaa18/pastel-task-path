@@ -185,27 +185,27 @@ export function CourseForm({
 
                     {/* Time Inputs */}
                     <div className="flex gap-2">
-                      <div className="flex-1 space-y-1.5">
+                      <div className="flex-1 min-w-0 space-y-1.5">
                         <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Start</div>
                         <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-border bg-background">
-                          <Clock className="w-4 h-4 text-muted-foreground" strokeWidth={1.8} />
+                          <Clock className="w-4 h-4 text-muted-foreground shrink-0" strokeWidth={1.8} />
                           <input
                             type="time"
                             value={s.start}
                             onChange={(e) => updateSch(s.id, { start: e.target.value })}
-                            className="flex-1 bg-transparent outline-none text-sm font-bold"
+                            className="w-full min-w-0 bg-transparent outline-none text-sm font-bold"
                           />
                         </div>
                       </div>
-                      <div className="flex-1 space-y-1.5">
+                      <div className="flex-1 min-w-0 space-y-1.5">
                         <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">End</div>
                         <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-border bg-background">
-                          <Clock className="w-4 h-4 text-muted-foreground" strokeWidth={1.8} />
+                          <Clock className="w-4 h-4 text-muted-foreground shrink-0" strokeWidth={1.8} />
                           <input
                             type="time"
                             value={s.end}
                             onChange={(e) => updateSch(s.id, { end: e.target.value })}
-                            className="flex-1 bg-transparent outline-none text-sm font-bold"
+                            className="w-full min-w-0 bg-transparent outline-none text-sm font-bold"
                           />
                         </div>
                       </div>
