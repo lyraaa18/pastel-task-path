@@ -1,6 +1,6 @@
 {
-  "name": "Student OS",
-  "short_name": "StudentOS",
+  "name": "SYNAPSE",
+  "short_name": "SYNAPSE",
   "description": "Folders, classes, habits, and tasks organizer.",
   "start_url": "/",
   "display": "standalone",
