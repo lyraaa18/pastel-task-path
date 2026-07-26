@@ -33,3 +33,10 @@ dist-ssr
 
 # Environment variables
 .env
+
+# clerk configuration (can include secrets)
+/.clerk/
+
+# Vercel build output
+.vercel/
+
