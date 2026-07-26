@@ -8,7 +8,7 @@ import { CourseForm } from "@/components/CourseForm";
 export const Route = createFileRoute("/schedule")({
   head: () => ({
     meta: [
-      { title: "Class Schedule — Student OS" },
+      { title: "Class Schedule — SYNAPSE" },
       { name: "description", content: "Your weekly class schedule." },
     ],
   }),
@@ -137,10 +137,10 @@ function SchedulePage() {
       ? getProgress(featuredClass)
       : isSelectedToday &&
         new Date().getHours() * 60 + new Date().getMinutes() >
-          featuredClass.endTime.split(":").map(Number)[0] * 60 +
-            featuredClass.endTime.split(":").map(Number)[1]
-      ? 100
-      : 0
+        featuredClass.endTime.split(":").map(Number)[0] * 60 +
+        featuredClass.endTime.split(":").map(Number)[1]
+        ? 100
+        : 0
     : 0;
 
   const handlePrev = () => {
@@ -173,21 +173,19 @@ function SchedulePage() {
         <div className="bg-secondary p-1 rounded-2xl flex gap-1">
           <button
             onClick={() => setViewMode("daily")}
-            className={`flex-1 py-2.5 text-xs rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 ${
-              viewMode === "daily"
+            className={`flex-1 py-2.5 text-xs rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 ${viewMode === "daily"
                 ? "bg-card text-foreground shadow-sm font-bold scale-[1.01]"
                 : "text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             <ClipboardList className="w-3.5 h-3.5" /> Daily Timeline
           </button>
           <button
             onClick={() => setViewMode("weekly")}
-            className={`flex-1 py-2.5 text-xs rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 ${
-              viewMode === "weekly"
+            className={`flex-1 py-2.5 text-xs rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 ${viewMode === "weekly"
                 ? "bg-card text-foreground shadow-sm font-bold scale-[1.01]"
                 : "text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             <Calendar className="w-3.5 h-3.5" /> Weekly Timetable
           </button>
@@ -311,11 +309,10 @@ function SchedulePage() {
                   <div
                     key={`${c.id}-${idx}`}
                     onClick={() => setPlayerIndex(idx)}
-                    className={`rounded-2xl border p-4 cursor-pointer transition active:scale-[0.99] ${
-                      isFeatured
+                    className={`rounded-2xl border p-4 cursor-pointer transition active:scale-[0.99] ${isFeatured
                         ? "border-foreground bg-card shadow-md scale-[1.01]"
                         : "border-border bg-card/60 hover:bg-card"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground font-semibold">{c.time}</span>

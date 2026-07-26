@@ -7,7 +7,7 @@ import { useState } from "react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Home — Student OS" },
+      { title: "Home — SYNAPSE" },
       { name: "description", content: "Your daily greeting, student ID, and ongoing tasks." },
     ],
   }),

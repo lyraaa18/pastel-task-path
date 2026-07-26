@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 export const Route = createFileRoute("/habits")({
   head: () => ({
     meta: [
-      { title: "Habits — Student OS" },
+      { title: "Habits — SYNAPSE" },
       { name: "description", content: "Track daily habits and weekly progress." },
     ],
   }),
@@ -118,11 +118,11 @@ function HabitsPage() {
   const displayedHabits = manage
     ? habits
     : habits.filter((h) => {
-        if (h.frequency === "custom") {
-          return h.weekdays?.includes(selectedDayIndex);
-        }
-        return true;
-      });
+      if (h.frequency === "custom") {
+        return h.weekdays?.includes(selectedDayIndex);
+      }
+      return true;
+    });
 
   const isViewingCurrentWeek = useMemo(() => {
     return currentWeekStart.toDateString() === startOfWeek(today).toDateString();
@@ -272,11 +272,10 @@ function HabitsPage() {
                     {/* Completion Check Button */}
                     <button
                       onClick={() => toggle(h.id, selected)}
-                      className={`w-9 h-9 rounded-full border transition flex items-center justify-center active:scale-90 font-bold text-xs select-none ${
-                        isDoneToday
+                      className={`w-9 h-9 rounded-full border transition flex items-center justify-center active:scale-90 font-bold text-xs select-none ${isDoneToday
                           ? "bg-pastel-yellow border-pastel-yellow text-foreground shadow-sm scale-105"
                           : "border-border bg-secondary/30 hover:bg-secondary/60 text-muted-foreground"
-                      }`}
+                        }`}
                     >
                       {isDoneToday ? "✓" : ""}
                     </button>
@@ -300,15 +299,14 @@ function HabitsPage() {
                       return (
                         <div
                           key={key}
-                          className={`w-2.5 h-2.5 rounded-full border flex items-center justify-center transition-all ${
-                            done
+                          className={`w-2.5 h-2.5 rounded-full border flex items-center justify-center transition-all ${done
                               ? "bg-pastel-yellow border-pastel-yellow/70 scale-110"
                               : isDaySelected
                                 ? "border-pastel-blue bg-pastel-blue/10 scale-105"
                                 : isDayToday
                                   ? "border-pastel-blue/40 bg-pastel-blue/5"
                                   : "border-border bg-secondary/30"
-                          }`}
+                            }`}
                           title={`${dayShort[index]}: ${done ? "Done" : "Todo"}`}
                         />
                       );
@@ -363,11 +361,11 @@ function HabitsPage() {
           onDelete={
             editor.habit
               ? () => {
-                  if (confirm(`Delete "${editor.habit!.name}"?`)) {
-                    setHabits((prev) => prev.filter((x) => x.id !== editor.habit!.id));
-                    setEditor({ open: false });
-                  }
+                if (confirm(`Delete "${editor.habit!.name}"?`)) {
+                  setHabits((prev) => prev.filter((x) => x.id !== editor.habit!.id));
+                  setEditor({ open: false });
                 }
+              }
               : undefined
           }
         />

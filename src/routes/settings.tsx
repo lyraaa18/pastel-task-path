@@ -7,7 +7,7 @@ import { useClerk, UserButton } from "@clerk/tanstack-react-start";
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — Student OS" },
+      { title: "Settings — SYNAPSE" },
       { name: "description", content: "Edit your profile." },
     ],
   }),

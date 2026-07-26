@@ -8,7 +8,7 @@ import { CourseForm } from "@/components/CourseForm";
 export const Route = createFileRoute("/courses")({
   head: () => ({
     meta: [
-      { title: "Courses — Student OS" },
+      { title: "Courses — SYNAPSE" },
       { name: "description", content: "Folder-style course library." },
     ],
   }),

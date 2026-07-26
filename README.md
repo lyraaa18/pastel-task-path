@@ -1,4 +1,4 @@
-# Student OS — Pastel Task Path
+# SYNAPSE — Pastel Task Path
 
 A beautiful, functional student organization dashboard built using TanStack Start, React, TailwindCSS, and Neon Database (PostgreSQL).
 

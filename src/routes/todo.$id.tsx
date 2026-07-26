@@ -5,7 +5,7 @@ import { ChevronLeft, Trash2, Calendar, Tag, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/todo/$id")({
   head: ({ params }) => ({
-    meta: [{ title: `Task — Student OS` }, { name: "description", content: `Task ${params.id}` }],
+    meta: [{ title: `Task — SYNAPSE` }, { name: "description", content: `Task ${params.id}` }],
   }),
   component: TodoDetail,
 });
@@ -126,12 +126,12 @@ function TodoDetail() {
             <span className="ml-auto font-medium">
               {todo.deadline
                 ? new Date(todo.deadline).toLocaleString("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
                 : "No deadline"}
             </span>
           </div>

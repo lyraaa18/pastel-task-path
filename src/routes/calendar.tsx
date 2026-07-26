@@ -6,7 +6,7 @@ import { useState } from "react";
 export const Route = createFileRoute("/calendar")({
   head: () => ({
     meta: [
-      { title: "Calendar — Student OS" },
+      { title: "Calendar — SYNAPSE" },
       { name: "description", content: "Month view of your tasks." },
     ],
   }),

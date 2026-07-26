@@ -14,7 +14,7 @@ import { CourseForm } from "@/components/CourseForm";
 export const Route = createFileRoute("/courses/$id")({
   head: ({ params }) => ({
     meta: [
-      { title: `Course — Student OS` },
+      { title: `Course — SYNAPSE` },
       { name: "description", content: `Course ${params.id}` },
     ],
   }),
@@ -78,11 +78,11 @@ function CourseDetail() {
 
   const schedText = course.schedules?.length
     ? course.schedules
-        .map(
-          (s) =>
-            `${s.days.map((d) => DAY_LABELS[d].toUpperCase().slice(0, 3)).join("/")} | ${s.start} - ${s.end}`,
-        )
-        .join(" • ")
+      .map(
+        (s) =>
+          `${s.days.map((d) => DAY_LABELS[d].toUpperCase().slice(0, 3)).join("/")} | ${s.start} - ${s.end}`,
+      )
+      .join(" • ")
     : "—";
 
   const updateCourse = (updated: Course) => {

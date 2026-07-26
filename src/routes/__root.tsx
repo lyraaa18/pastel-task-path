@@ -79,12 +79,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1" },
       { name: "theme-color", content: "#fcfbf8" },
-      { title: "Student OS — Planner & Habits" },
+      { title: "SYNAPSE — Planner & Habits" },
       {
         name: "description",
         content: "A calm student productivity app: courses, to-dos, schedule and habits.",
       },
-      { property: "og:title", content: "Student OS — Planner & Habits" },
+      { property: "og:title", content: "SYNAPSE — Planner & Habits" },
       {
         property: "og:description",
         content: "A calm student productivity app: courses, to-dos, schedule and habits.",
@@ -131,7 +131,7 @@ function AppContent({ children }: { children: ReactNode }) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#fcfbf8] font-sans">
         <div className="text-[#2C2925] text-sm tracking-widest uppercase animate-pulse">
-          Loading Student OS...
+          Loading SYNAPSE...
         </div>
       </div>
     );
@@ -142,7 +142,7 @@ function AppContent({ children }: { children: ReactNode }) {
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#fcfbf8] p-6 text-foreground font-sans">
         <div className="w-full max-w-[460px] bg-white border border-[#E9E4DB] rounded-3xl p-8 shadow-sm flex flex-col items-center">
           <div className="mb-6 text-center">
-            <h1 className="font-serif text-4xl text-[#2C2925] tracking-tight mb-2">Student OS</h1>
+            <h1 className="font-serif text-4xl text-[#2C2925] tracking-tight mb-2">SYNAPSE</h1>
             <p className="text-neutral-500 text-sm max-w-[320px] mx-auto leading-relaxed">
               A calm space to organize your courses, tasks, schedule, and habits.
             </p>
